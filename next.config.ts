@@ -33,6 +33,11 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
+  experimental: {
+    staleTimes: {
+      dynamic: 0,
+    },
+  },
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "**.supabase.co" },

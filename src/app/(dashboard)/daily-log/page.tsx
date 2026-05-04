@@ -4,7 +4,7 @@ import { requirePermission } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, BookOpen, CheckCircle2, Info, History, AlertTriangle, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, BookOpen, CheckCircle2, Info, History, AlertTriangle } from "lucide-react";
 import { getDailyLog } from "./actions";
 import { DailyLogTable } from "./_components/daily-log-table";
 import { CloseDayDialog } from "./_components/close-day-dialog";
@@ -12,6 +12,7 @@ import { ReopenDialog } from "./_components/reopen-dialog";
 import { StartDayButton } from "./_components/start-day-button";
 import { SyncProductsButton } from "./_components/sync-products-button";
 import { DiscardLogButton } from "./_components/discard-log-button";
+import { DateNav } from "./_components/date-nav";
 
 export const metadata = { title: "Daily Log" };
 
@@ -102,30 +103,16 @@ export default async function DailyLogPage({ searchParams }: Props) {
               </Badge>
             )}
           </div>
-          {/* Date navigation */}
-          <div className="flex items-center gap-1 ml-9">
-            <Link
-              href={`/daily-log?date=${prevDay}`}
-              className={cn(buttonVariants({ variant: "ghost", size: "icon-sm" }))}
-              title="Previous day"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Link>
-            <span className="text-muted-foreground text-sm px-1">
-              {dateLabel}{isToday ? " (today)" : ""}
-            </span>
-            <Link
-              href={`/daily-log?date=${nextDay}`}
-              className={cn(
-                buttonVariants({ variant: "ghost", size: "icon-sm" }),
-                isToday && "pointer-events-none opacity-30"
-              )}
-              title="Next day"
-              aria-disabled={isToday}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Link>
-          </div>
+
+          {/* Date navigation — client component handles instant navigation + calendar picker */}
+          <DateNav
+            validDate={validDate}
+            prevDay={prevDay}
+            nextDay={nextDay}
+            dateLabel={dateLabel}
+            isToday={isToday}
+            todayStr={todayStr}
+          />
         </div>
 
         {/* Controls */}
@@ -210,7 +197,7 @@ export default async function DailyLogPage({ searchParams }: Props) {
             </div>
           )}
 
-          {/* Outdated opening warning — shown when previous day was reopened after this log was started */}
+          {/* Outdated opening warning */}
           {isOpen && log.openingOutdated && (
             <div className="flex items-start gap-3 rounded-lg bg-amber-50 border border-amber-300 px-4 py-3 text-sm text-amber-900">
               <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0 text-amber-600" />
@@ -262,39 +249,13 @@ export default async function DailyLogPage({ searchParams }: Props) {
           {/* Stats row */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              {
-                label: "Products",
-                value: log.items.length,
-                sub: "in this log",
-              },
-              {
-                label: "With Activity",
-                value: log.items.filter(
-                  (i) => i.producedQty + i.usedQty + i.soldQty + i.wasteQty + i.damagedQty > 0
-                ).length,
-                sub: "rows filled",
-              },
-              {
-                label: "Purchased Today",
-                value: log.items.filter((i) => i.purchasedQty > 0).length,
-                sub: "products received",
-              },
-              {
-                label: "Adjustments",
-                value: log.items.filter(
-                  (i) => i.adjustInQty > 0.001 || i.adjustOutQty > 0.001
-                ).length,
-                sub: "items adjusted",
-                alert: false,
-              },
-            ].map(({ label, value, sub, alert }) => (
-              <div
-                key={label}
-                className="rounded-lg border bg-card px-4 py-3"
-              >
-                <div className={`text-2xl font-bold tabular-nums ${alert && value > 0 ? "text-amber-600" : ""}`}>
-                  {value}
-                </div>
+              { label: "Products",        value: log.items.length,                                                                                                  sub: "in this log" },
+              { label: "With Activity",   value: log.items.filter((i) => i.producedQty + i.usedQty + i.soldQty + i.wasteQty + i.damagedQty > 0).length,            sub: "rows filled" },
+              { label: "Purchased Today", value: log.items.filter((i) => i.purchasedQty > 0).length,                                                                sub: "products received" },
+              { label: "Adjustments",     value: log.items.filter((i) => i.adjustInQty > 0.001 || i.adjustOutQty > 0.001).length,                                  sub: "items adjusted" },
+            ].map(({ label, value, sub }) => (
+              <div key={label} className="rounded-lg border bg-card px-4 py-3">
+                <div className="text-2xl font-bold tabular-nums">{value}</div>
                 <div className="text-xs text-muted-foreground mt-0.5">
                   <span className="font-medium text-foreground">{label}</span> · {sub}
                 </div>
@@ -302,8 +263,8 @@ export default async function DailyLogPage({ searchParams }: Props) {
             ))}
           </div>
 
-          {/* Main table */}
-          <DailyLogTable items={log.items} isOpen={isOpen} />
+          {/* Main table — key forces full remount when log changes so stale state is never shown */}
+          <DailyLogTable key={log.id} items={log.items} isOpen={isOpen} />
         </>
       )}
     </div>
