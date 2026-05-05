@@ -135,9 +135,9 @@ function RequestCard({ req }: { req: AccessRequest }) {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 mt-2">
               <InfoRow icon={Mail}       value={req.workEmail}  />
-              <InfoRow icon={Building2}  value={req.department} />
-              <InfoRow icon={Briefcase}  value={req.jobTitle}   />
-              {req.phone && <InfoRow icon={Phone} value={req.phone} />}
+              {req.department && <InfoRow icon={Building2} value={req.department} />}
+              {req.jobTitle   && <InfoRow icon={Briefcase} value={req.jobTitle}   />}
+              {req.phone      && <InfoRow icon={Phone}     value={req.phone}      />}
             </div>
 
             {req.reason && (

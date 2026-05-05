@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import { Webhook } from "svix";
+import { prisma } from "@/lib/prisma";
 import { sendRequestReceivedEmail, sendAdminNewRequestAlert } from "@/lib/email";
 
 // Diagnostic: lets you confirm the route is reachable without a redirect
@@ -62,11 +63,28 @@ export async function POST(req: Request) {
 
     if (!primaryEmail) return new Response("No email found", { status: 200 });
 
-    const firstName = first_name ?? "there";
+    const fullName  = [event.data.first_name, event.data.last_name].filter(Boolean).join(" ") || "Unknown";
+    const firstName = event.data.first_name ?? "there";
+
+    // Create a pending access request so admins see an in-app notification
+    // and can action it from /settings/access-requests. Skip if one already exists.
+    const existing = await prisma.accessRequest.findFirst({
+      where: { workEmail: primaryEmail, status: "PENDING" },
+    });
+    if (!existing) {
+      await prisma.accessRequest.create({
+        data: {
+          fullName,
+          workEmail:  primaryEmail,
+          department: "",
+          jobTitle:   "",
+        },
+      });
+    }
 
     await Promise.allSettled([
       sendRequestReceivedEmail(primaryEmail, firstName),
-      sendAdminNewRequestAlert({ fullName: firstName, workEmail: primaryEmail }),
+      sendAdminNewRequestAlert({ fullName, workEmail: primaryEmail }),
     ]);
 
     return new Response("OK", { status: 200 });
