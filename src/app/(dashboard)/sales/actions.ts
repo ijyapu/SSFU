@@ -223,6 +223,7 @@ export async function createSalesOrder(values: CreateSoValues) {
           customerId:   data.customerId,
           amount:       paidNow,
           method:       "CASH",
+          paidAt:       toNoonUTC(data.orderDate),
           notes:        paidNow >= factoryAmount - 0.001 ? "Payment on delivery" : "Partial payment on delivery",
           createdBy:    userId,
         },
