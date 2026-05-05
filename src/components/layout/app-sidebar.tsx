@@ -15,7 +15,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarRail,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -34,7 +33,7 @@ export function AppSidebar() {
     : "??";
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar collapsible="offcanvas">
       {/* Brand */}
       <SidebarHeader>
         <SidebarMenu>
@@ -133,7 +132,6 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarFooter>
 
-      <SidebarRail />
     </Sidebar>
   );
 }
