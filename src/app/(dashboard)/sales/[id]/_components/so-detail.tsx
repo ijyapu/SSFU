@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useTransition } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { DateDisplay } from "@/components/ui/date-display";
 import {
-  CheckCircle, XCircle, CreditCard, Loader2, Pencil, AlertTriangle, Printer, SquarePen,
+  CheckCircle, XCircle, CreditCard, Loader2, Pencil, AlertTriangle, Printer, SquarePen, Trash2,
 } from "lucide-react";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -25,15 +25,15 @@ import { buttonVariants } from "@/components/ui/button-variants";
 import { cn } from "@/lib/utils";
 import { SoPaymentForm, type ExistingPayment } from "./so-payment-form";
 import { ReturnFormInline } from "./return-form-inline";
-import { confirmSalesOrder, voidSalesOrder, markSalesOrderLost } from "../../actions";
+import { confirmSalesOrder, voidSalesOrder, markSalesOrderLost, deleteSalesmanPayment } from "../../actions";
 
 const STATUS_CONFIG = {
   DRAFT:          { label: "Draft",              className: "bg-gray-100 text-gray-700" },
   CONFIRMED:      { label: "Confirmed",          className: "bg-blue-100 text-blue-700" },
   PARTIALLY_PAID: { label: "Partial Payment",    className: "bg-amber-100 text-amber-700" },
-  PAID:           { label: "Paid",               className: "bg-green-100 text-green-700" },
+  PAID:           { label: "Paid",               className: "bg-emerald-100 text-emerald-700" },
   CANCELLED:      { label: "Voided",             className: "bg-red-100 text-red-700" },
-  LOST:           { label: "Lost / Not Returned", className: "bg-orange-100 text-orange-700" },
+  LOST:           { label: "Lost / Not Returned", className: "bg-red-100 text-red-700" },
 } as const;
 
 const METHOD_LABELS: Record<string, string> = {
@@ -115,6 +115,21 @@ export function SoDetail(props: Props) {
   const [voiding,      setVoiding]      = useState(false);
   const [lostOpen,     setLostOpen]     = useState(false);
   const [markingLost,  setMarkingLost]  = useState(false);
+  const [deletingPaymentId, setDeletingPaymentId] = useState<string | null>(null);
+  const [deletePaymentPending, startDeletePayment] = useTransition();
+
+  function handleDeletePayment() {
+    if (!deletingPaymentId) return;
+    startDeletePayment(async () => {
+      try {
+        await deleteSalesmanPayment(deletingPaymentId);
+        toast.success("Payment deleted.");
+        setDeletingPaymentId(null);
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Failed to delete payment.");
+      }
+    });
+  }
   const { sortKey, sortDir, toggle }    = useSortable("productName");
 
   const sortedItems = useMemo(() => {
@@ -435,13 +450,22 @@ export function SoDetail(props: Props) {
                         {p.reference && ` · ${p.reference}`}
                       </div>
                     </div>
-                    <button
-                      onClick={() => { setEditingPayment(p); setPaymentOpen(true); }}
-                      className="shrink-0 p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
-                      title="Edit payment"
-                    >
-                      <SquarePen className="h-3.5 w-3.5" />
-                    </button>
+                    <div className="flex items-center shrink-0 gap-0.5">
+                      <button
+                        onClick={() => { setEditingPayment(p); setPaymentOpen(true); }}
+                        className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
+                        title="Edit payment"
+                      >
+                        <SquarePen className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        onClick={() => setDeletingPaymentId(p.id)}
+                        className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-destructive"
+                        title="Delete payment"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </CardContent>
@@ -460,7 +484,7 @@ export function SoDetail(props: Props) {
                     <div key={r.id} className="space-y-1.5">
                       <div className="flex items-center justify-between">
                         <span className="font-mono text-xs font-medium">{r.returnNumber}</span>
-                        <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${isFresh ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"}`}>
+                        <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${isFresh ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
                           {isFresh ? "Fresh" : "Waste"}
                         </span>
                       </div>
@@ -612,6 +636,31 @@ export function SoDetail(props: Props) {
               className="bg-orange-600 text-white hover:bg-orange-700"
             >
               {markingLost ? "Marking..." : "Yes, Mark as Lost"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      {/* Delete payment confirmation */}
+      <AlertDialog
+        open={!!deletingPaymentId}
+        onOpenChange={(open) => { if (!open && !deletePaymentPending) setDeletingPaymentId(null); }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this payment?</AlertDialogTitle>
+            <AlertDialogDescription>
+              The payment will be permanently removed. The order&apos;s collected amount and status
+              will be recalculated automatically. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletePaymentPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeletePayment}
+              disabled={deletePaymentPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deletePaymentPending ? "Deleting…" : "Yes, delete payment"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

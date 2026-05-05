@@ -41,7 +41,7 @@ export function PlBreakdown({ revenue, cogs, expenses, payroll }: Props) {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">{fmt(revenue)}</p>
-            <p className="text-xs text-muted-foreground mt-1">Confirmed sales</p>
+            <p className="text-xs text-muted-foreground mt-1">Net sales after commission</p>
           </CardContent>
         </Card>
         <Card>
@@ -53,7 +53,7 @@ export function PlBreakdown({ revenue, cogs, expenses, payroll }: Props) {
               {fmt(grossProfit)}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              {grossMarginPct.toFixed(1)}% margin
+              Revenue minus cost of goods · {grossMarginPct.toFixed(1)}% margin
             </p>
           </CardContent>
         </Card>
@@ -63,7 +63,7 @@ export function PlBreakdown({ revenue, cogs, expenses, payroll }: Props) {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold text-destructive">{fmt(totalOpex)}</p>
-            <p className="text-xs text-muted-foreground mt-1">Expenses + payroll</p>
+            <p className="text-xs text-muted-foreground mt-1">Approved costs + finalized payroll</p>
           </CardContent>
         </Card>
         <Card>
@@ -78,7 +78,7 @@ export function PlBreakdown({ revenue, cogs, expenses, payroll }: Props) {
               {fmt(netProfit)}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              {netMarginPct.toFixed(1)}% net margin
+              After all costs deducted · {netMarginPct.toFixed(1)}% net margin
             </p>
           </CardContent>
         </Card>

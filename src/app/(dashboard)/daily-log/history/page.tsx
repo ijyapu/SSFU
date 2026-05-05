@@ -132,9 +132,9 @@ export default async function DailyLogHistoryPage() {
                       variant="secondary"
                       className={
                         log.status === "CLOSED"
-                          ? "bg-green-100 text-green-700"
+                          ? "bg-emerald-100 text-emerald-700"
                           : log.status === "AUTO_ADJUSTED"
-                          ? "bg-purple-100 text-purple-700"
+                          ? "bg-blue-100 text-blue-700"
                           : log.status === "REOPENED"
                           ? "bg-blue-100 text-blue-700"
                           : "bg-amber-100 text-amber-700"

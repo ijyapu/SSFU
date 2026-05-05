@@ -22,7 +22,7 @@ const STATUS_CONFIG = {
   DRAFT:              { label: "Draft",               className: "bg-gray-100 text-gray-700" },
   CONFIRMED:          { label: "Confirmed",           className: "bg-blue-100 text-blue-700" },
   PARTIALLY_RECEIVED: { label: "Partially Received", className: "bg-amber-100 text-amber-700" },
-  RECEIVED:           { label: "Received",            className: "bg-green-100 text-green-700" },
+  RECEIVED:           { label: "Received",            className: "bg-emerald-100 text-emerald-700" },
   CANCELLED:          { label: "Cancelled",           className: "bg-red-100 text-red-700" },
 } as const;
 

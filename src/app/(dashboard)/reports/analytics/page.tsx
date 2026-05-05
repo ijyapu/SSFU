@@ -278,9 +278,10 @@ export default async function AnalyticsPage({
   const curPurchases = Number(curPurchasesAgg._sum.totalAmount ?? 0);
   const curExpenses  = Number(curExpensesAgg._sum.amount       ?? 0);
   const curReturns   = Number(curReturnsAgg._sum.totalAmount   ?? 0);
-  const curProfit    = curRevenue - curPurchases - curExpenses;
-  const prevRevenue  = Number(prevSalesAgg._sum.totalAmount     ?? 0);
-  const prevPurchases = Number(prevPurchasesAgg._sum.totalAmount ?? 0);
+  // Gross profit = revenue minus cost of goods (purchases). Expenses shown separately.
+  const curGrossProfit = curRevenue - curPurchases;
+  const prevRevenue    = Number(prevSalesAgg._sum.totalAmount     ?? 0);
+  const prevPurchases  = Number(prevPurchasesAgg._sum.totalAmount ?? 0);
   const revPct  = pctChange(curRevenue,   prevRevenue);
   const purPct  = pctChange(curPurchases, prevPurchases);
 
@@ -349,6 +350,8 @@ export default async function AnalyticsPage({
   };
   const prevLabel = prevLabels[period];
 
+  const grossMarginPct = curRevenue > 0 ? (curGrossProfit / curRevenue) * 100 : 0;
+
   return (
     <div className="space-y-6 pb-8">
 
@@ -365,18 +368,59 @@ export default async function AnalyticsPage({
 
       {/* ── KPI Cards ── */}
       <div className="grid grid-cols-2 gap-3 xl:grid-cols-5">
-        <KpiCard label="Revenue"    value={fmtRs(curRevenue)}   sub={revPct  !== null ? `${revPct  >= 0 ? "+" : ""}${revPct.toFixed(1)}%  ${prevLabel}` : shortLabel} trend={revPct  !== null ? (revPct  >= 0 ? "up" : "down") : undefined} color="emerald" />
-        <KpiCard label="Purchases"  value={fmtRs(curPurchases)} sub={purPct  !== null ? `${purPct  >= 0 ? "+" : ""}${purPct.toFixed(1)}%  ${prevLabel}` : shortLabel} trend={purPct  !== null ? (purPct  <= 0 ? "up" : "down") : undefined} color="blue" />
-        <KpiCard label="Gross Profit" value={fmtRs(curProfit)}  sub={curRevenue > 0 ? `${((curProfit / curRevenue) * 100).toFixed(1)}% margin` : "No revenue"} color={curProfit >= 0 ? "emerald" : "red"} />
-        <KpiCard label="Expenses"   value={fmtRs(curExpenses)}  color="amber" />
-        <KpiCard label="Returns"    value={fmtRs(curReturns)}   sub={`${curReturnsAgg._count.id} return${curReturnsAgg._count.id !== 1 ? "s" : ""}`} color="rose" />
+        <KpiCard
+          label="Revenue"
+          desc="Total billed on sales orders"
+          value={fmtRs(curRevenue)}
+          sub={revPct !== null ? `${revPct >= 0 ? "+" : ""}${revPct.toFixed(1)}% ${prevLabel}` : shortLabel}
+          trend={revPct !== null ? (revPct >= 0 ? "up" : "down") : undefined}
+          color="emerald"
+          note="Includes salesman commission"
+        />
+        <KpiCard
+          label="Purchases"
+          desc="Cost of goods received"
+          value={fmtRs(curPurchases)}
+          sub={purPct !== null ? `${purPct >= 0 ? "+" : ""}${purPct.toFixed(1)}% ${prevLabel}` : shortLabel}
+          trend={purPct !== null ? (purPct <= 0 ? "up" : "down") : undefined}
+          color="blue"
+          note="Confirmed & received orders"
+        />
+        <KpiCard
+          label="Gross Profit"
+          desc="Revenue minus purchase cost"
+          value={fmtRs(curGrossProfit)}
+          sub={`${grossMarginPct.toFixed(1)}% margin`}
+          color={curGrossProfit >= 0 ? "emerald" : "red"}
+          note="Before expenses & payroll"
+        />
+        <KpiCard
+          label="Expenses"
+          desc="Approved operating costs"
+          value={fmtRs(curExpenses)}
+          color="amber"
+          note="Excludes payroll"
+        />
+        <KpiCard
+          label="Returns"
+          desc="Goods brought back unsold"
+          value={fmtRs(curReturns)}
+          sub={`${curReturnsAgg._count.id} return${curReturnsAgg._count.id !== 1 ? "s" : ""}`}
+          color="rose"
+          note="Fresh + waste combined"
+        />
       </div>
 
       {/* ── Trend chart ── */}
       <Card className="border-0 shadow-sm">
         <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-sm font-semibold">Revenue vs Purchases vs Expenses</CardTitle>
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div>
+              <CardTitle className="text-sm font-semibold">Revenue vs Purchases vs Expenses</CardTitle>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                How much came in, how much was spent on stock, and operating costs — side by side
+              </p>
+            </div>
             <span className="text-xs text-muted-foreground">{trendTitle}</span>
           </div>
         </CardHeader>
@@ -390,10 +434,12 @@ export default async function AnalyticsPage({
         <Card className="border-0 shadow-sm">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-semibold">Top 10 Products Sold</CardTitle>
-              <Package className="h-4 w-4 text-emerald-500" />
+              <div>
+                <CardTitle className="text-sm font-semibold">Top 10 Products Sold</CardTitle>
+                <p className="text-xs text-muted-foreground mt-0.5">By quantity dispatched — {label}</p>
+              </div>
+              <Package className="h-4 w-4 text-emerald-500 shrink-0" />
             </div>
-            <p className="text-xs text-muted-foreground">By quantity — {label}</p>
           </CardHeader>
           <CardContent>
             <TopProductsSoldChart data={topProductsSold} />
@@ -403,10 +449,12 @@ export default async function AnalyticsPage({
         <Card className="border-0 shadow-sm">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-semibold">Top Salesmen</CardTitle>
-              <TrendingUp className="h-4 w-4 text-indigo-500" />
+              <div>
+                <CardTitle className="text-sm font-semibold">Top Salesmen by Revenue</CardTitle>
+                <p className="text-xs text-muted-foreground mt-0.5">Ranked by total order value — {label}</p>
+              </div>
+              <TrendingUp className="h-4 w-4 text-indigo-500 shrink-0" />
             </div>
-            <p className="text-xs text-muted-foreground">By revenue — {label}</p>
           </CardHeader>
           <CardContent>
             <TopSalesmenChart data={topSalesmen} />
@@ -417,11 +465,15 @@ export default async function AnalyticsPage({
       {/* ── Top Purchased Products ── */}
       <Card className="border-0 shadow-sm">
         <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-sm font-semibold">Top 10 Purchased Products</CardTitle>
-            <ShoppingCart className="h-4 w-4 text-blue-500" />
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div>
+              <CardTitle className="text-sm font-semibold">Top 10 Purchased Products</CardTitle>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                By quantity received from suppliers — {label}. Helps you see what you're restocking most.
+              </p>
+            </div>
+            <ShoppingCart className="h-4 w-4 text-blue-500 shrink-0" />
           </div>
-          <p className="text-xs text-muted-foreground">By quantity received — {label}</p>
         </CardHeader>
         <CardContent>
           <TopPurchasedChart data={topPurchased} />
@@ -433,10 +485,14 @@ export default async function AnalyticsPage({
         <Card className="border-0 shadow-sm">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-semibold">Expenses by Category</CardTitle>
-              <Receipt className="h-4 w-4 text-amber-500" />
+              <div>
+                <CardTitle className="text-sm font-semibold">Expenses by Category</CardTitle>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Where your money is going — submitted &amp; approved — {label}
+                </p>
+              </div>
+              <Receipt className="h-4 w-4 text-amber-500 shrink-0" />
             </div>
-            <p className="text-xs text-muted-foreground">Submitted + approved — {label}</p>
           </CardHeader>
           <CardContent>
             <ExpensesByCategoryChart data={expensesByCategory} />
@@ -446,10 +502,14 @@ export default async function AnalyticsPage({
         <Card className="border-0 shadow-sm">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-semibold">Returns by Type</CardTitle>
-              <RotateCcw className="h-4 w-4 text-rose-500" />
+              <div>
+                <CardTitle className="text-sm font-semibold">Returns by Type</CardTitle>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Fresh = resellable stock back. Waste = spoiled, written off. — {label}
+                </p>
+              </div>
+              <RotateCcw className="h-4 w-4 text-rose-500 shrink-0" />
             </div>
-            <p className="text-xs text-muted-foreground">Fresh vs Waste — {label}</p>
           </CardHeader>
           <CardContent>
             <ReturnsByTypeChart data={returnsByType} />
@@ -460,7 +520,7 @@ export default async function AnalyticsPage({
                     <p className="font-semibold text-foreground text-sm">
                       {r.count} order{r.count !== 1 ? "s" : ""}
                     </p>
-                    <p>{r.type === "FRESH" ? "Fresh" : "Waste"} returns</p>
+                    <p>{r.type === "FRESH" ? "Fresh (back to stock)" : "Waste (written off)"}</p>
                   </div>
                 ))}
               </div>
@@ -476,11 +536,13 @@ export default async function AnalyticsPage({
 // ─── KPI Card ────────────────────────────────────────────────────────────────
 
 function KpiCard({
-  label, value, sub, trend, color,
+  label, desc, value, sub, note, trend, color,
 }: {
   label: string;
+  desc: string;
   value: string;
   sub?: string;
+  note?: string;
   trend?: "up" | "down";
   color: "emerald" | "blue" | "amber" | "rose" | "red";
 }) {
@@ -494,10 +556,11 @@ function KpiCard({
 
   return (
     <Card className="border-0 shadow-sm">
-      <CardHeader className="pb-1">
+      <CardHeader className="pb-1 space-y-0.5">
         <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
           {label}
         </CardTitle>
+        <p className="text-[11px] text-muted-foreground/80 leading-tight">{desc}</p>
       </CardHeader>
       <CardContent>
         <p className={`text-xl font-bold tabular-nums leading-tight ${valueColor}`}>{value}</p>
@@ -512,6 +575,7 @@ function KpiCard({
             {sub}
           </p>
         )}
+        {note && <p className="text-[10px] text-muted-foreground/60 mt-0.5 italic">{note}</p>}
       </CardContent>
     </Card>
   );

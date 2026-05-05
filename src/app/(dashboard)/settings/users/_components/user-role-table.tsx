@@ -43,7 +43,7 @@ const ALL_ROLES: { value: AppRole | "none"; label: string; color: string }[] = [
 const ROLE_BADGE: Record<string, string> = {
   superadmin: "bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300",
   admin:      "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300",
-  manager:    "bg-purple-100 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300",
+  manager:    "bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300",
   accountant: "bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300",
   employee:   "bg-muted text-muted-foreground",
 };
@@ -90,8 +90,11 @@ function RoleSelect({
     startTransition(async () => {
       try {
         await setUserRole(userId, newRole);
+        toast.success("Role updated successfully.");
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to update role.");
+        const msg = err instanceof Error ? err.message : "Failed to update role.";
+        setError(msg);
+        toast.error(msg);
       }
     });
   }

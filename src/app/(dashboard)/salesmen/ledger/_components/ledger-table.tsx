@@ -155,7 +155,7 @@ export function LedgerTable({
                     <td className="px-4 py-2.5 w-28">
                       <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${
                         e.type === "INVOICE"    ? "bg-blue-100 text-blue-700 dark:bg-blue-900/40" :
-                        e.type === "RETURN"     ? "bg-orange-100 text-orange-700 dark:bg-orange-900/40" :
+                        e.type === "RETURN"     ? "bg-amber-100 text-amber-700 dark:bg-amber-950/40" :
                         e.type === "COMMISSION" ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40" :
                         "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40"
                       }`}>

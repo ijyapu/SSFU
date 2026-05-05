@@ -61,6 +61,7 @@ export function StockValuationTable({ categories, grandTotal, asOf }: Props) {
         <div>
           <p className="text-sm text-muted-foreground">Total Inventory Value</p>
           <p className="text-2xl font-bold">{Rs(grandTotal)}</p>
+          <p className="text-[11px] text-muted-foreground/70 mt-0.5">Current stock × cost price per product</p>
         </div>
         <div className="text-right">
           <p className="text-xs text-muted-foreground">As of</p>
@@ -99,10 +100,10 @@ export function StockValuationTable({ categories, grandTotal, asOf }: Props) {
                     {(() => { const sp = { sortKey, sortDir, toggle: sortToggle }; return (
                     <tr>
                       <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground"><SortButton col="name"         label="Product"    {...sp} /></th>
-                      <th className="px-4 py-2 text-right tabular-nums text-xs font-medium text-muted-foreground"><SortButton col="currentStock" label="Stock"      {...sp} className="justify-end" /></th>
-                      <th className="px-4 py-2 text-right tabular-nums text-xs font-medium text-muted-foreground"><SortButton col="reorderLevel" label="Reorder"    {...sp} className="justify-end" /></th>
-                      <th className="px-4 py-2 text-right tabular-nums text-xs font-medium text-muted-foreground"><SortButton col="costPrice"    label="Cost Price" {...sp} className="justify-end" /></th>
-                      <th className="px-4 py-2 text-right tabular-nums text-xs font-medium text-muted-foreground"><SortButton col="totalValue"   label="Value"      {...sp} className="justify-end" /></th>
+                      <th title="Current quantity on hand" className="px-4 py-2 text-right tabular-nums text-xs font-medium text-muted-foreground"><SortButton col="currentStock" label="Stock"      {...sp} className="justify-end" /></th>
+                      <th title="Minimum quantity before reordering" className="px-4 py-2 text-right tabular-nums text-xs font-medium text-muted-foreground"><SortButton col="reorderLevel" label="Reorder"    {...sp} className="justify-end" /></th>
+                      <th title="Purchase price per unit" className="px-4 py-2 text-right tabular-nums text-xs font-medium text-muted-foreground"><SortButton col="costPrice"    label="Cost Price" {...sp} className="justify-end" /></th>
+                      <th title="Stock × cost price" className="px-4 py-2 text-right tabular-nums text-xs font-medium text-muted-foreground"><SortButton col="totalValue"   label="Value"      {...sp} className="justify-end" /></th>
                     </tr>
                     ); })()}
                   </thead>

@@ -73,7 +73,7 @@ export default async function RecipesPage() {
                   {margin !== null ? (
                     <Badge
                       variant="secondary"
-                      className={margin >= 0 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}
+                      className={margin >= 0 ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"}
                     >
                       {margin >= 0 ? "+" : ""}{margin.toFixed(1)}%
                     </Badge>

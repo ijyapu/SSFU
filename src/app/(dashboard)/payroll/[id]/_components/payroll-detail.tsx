@@ -165,7 +165,7 @@ export function PayrollDetail({ id, month, year, status, notes, items, autoPrint
       <div className="flex flex-wrap items-center justify-between gap-3 no-print">
         <div className="flex items-center gap-3">
           {finalized ? (
-            <Badge variant="secondary" className="bg-green-100 text-green-700 text-sm px-3 py-1">
+            <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 text-sm px-3 py-1">
               <Lock className="h-3.5 w-3.5 mr-1" />
               Finalized
             </Badge>

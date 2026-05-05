@@ -126,7 +126,7 @@ export function AdjustmentForm({ products, isAdmin }: Props) {
                   </FormControl>
                   <SelectContent>
                     <SelectItem value="ADJUSTMENT_IN" label="Stock Increase">
-                      <Badge variant="secondary" className="mr-2 bg-green-100 text-green-700">IN</Badge>
+                      <Badge variant="secondary" className="mr-2 bg-emerald-100 text-emerald-700">IN</Badge>
                       Stock Increase
                     </SelectItem>
                     <SelectItem value="ADJUSTMENT_OUT" label="Stock Decrease">

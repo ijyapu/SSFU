@@ -28,11 +28,19 @@ interface Props {
 }
 
 const ACTION_COLORS: Record<string, string> = {
-  FINALIZE_PAYROLL:      "bg-purple-100 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300",
-  CONFIRM_SALES_ORDER:   "bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300",
-  CONFIRM_PURCHASE_ORDER:"bg-sky-100 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300",
-  APPROVE_EXPENSE:       "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300",
-  REJECT_EXPENSE:        "bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300",
+  SALES_ORDER_CONFIRM:    "bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300",
+  SALES_ORDER_EDIT:       "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300",
+  SALES_ORDER_CANCEL:     "bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300",
+  SALES_ORDER_DELETE:     "bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300",
+  SALES_RETURN_CREATE:    "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300",
+  SALES_RETURN_EDIT:      "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300",
+  DAILY_LOG_CLOSE:        "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300",
+  DAILY_LOG_REOPEN:       "bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300",
+  DAILY_LOG_DISCARD:      "bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300",
+  DAILY_LOG_AUTO_ADJUST:  "bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300",
+  STOCK_CORRECTION:       "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300",
+  PAYMENT_EDIT:           "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300",
+  PAYMENT_DELETE:         "bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300",
 };
 
 function ActionBadge({ action }: { action: string }) {

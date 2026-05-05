@@ -50,7 +50,7 @@ export default async function CompanyPage() {
           </div>
         </div>
         <div className="px-6 py-4 flex flex-wrap gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-green-100 text-green-700 text-xs font-medium px-3 py-1">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-medium px-3 py-1">
             <BadgeCheck className="h-3.5 w-3.5" />
             PAN Registered
           </span>

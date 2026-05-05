@@ -79,9 +79,10 @@ export function SalesmanSalesTable({ rows, from, to, totalRevenue }: Props) {
     return sortDir === "asc" ? <ArrowUp className="h-3.5 w-3.5" /> : <ArrowDown className="h-3.5 w-3.5" />;
   }
 
-  const Th = ({ col, label, right }: { col: SortKey; label: string; right?: boolean }) => (
+  const Th = ({ col, label, title, right }: { col: SortKey; label: string; title?: string; right?: boolean }) => (
     <th
       onClick={() => toggleSort(col)}
+      title={title}
       className={`px-4 py-3 text-xs font-medium text-muted-foreground cursor-pointer select-none hover:text-foreground whitespace-nowrap ${right ? "text-right" : "text-left"}`}
     >
       <span className="inline-flex items-center gap-1">{label}<SortIcon col={col} /></span>
@@ -119,10 +120,12 @@ export function SalesmanSalesTable({ rows, from, to, totalRevenue }: Props) {
         <div>
           <p className="text-xs text-muted-foreground">Total Revenue</p>
           <p className="text-xl font-bold">{Rs(totalRevenue)}</p>
+          <p className="text-[11px] text-muted-foreground/70">All salesmen combined</p>
         </div>
         <div>
           <p className="text-xs text-muted-foreground">Salesmen</p>
           <p className="text-xl font-bold">{rows.length}</p>
+          <p className="text-[11px] text-muted-foreground/70">Active in this period</p>
         </div>
         <div>
           <p className="text-xs text-muted-foreground">Period</p>
@@ -152,11 +155,11 @@ export function SalesmanSalesTable({ rows, from, to, totalRevenue }: Props) {
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">#</th>
                   <Th col="salesmanName"  label="Salesman" />
-                  <Th col="orderCount"    label="Orders" right />
-                  <Th col="totalRevenue"  label="Revenue" right />
-                  <Th col="totalPaid"     label="Collected" right />
-                  <Th col="outstanding"   label="Outstanding" right />
-                  <Th col="avgOrderValue" label="Avg Order" right />
+                  <Th col="orderCount"    label="Orders"      title="Number of sales orders placed"    right />
+                  <Th col="totalRevenue"  label="Revenue"     title="Total billed amount (inc. commission)" right />
+                  <Th col="totalPaid"     label="Collected"   title="Cash payments received so far"    right />
+                  <Th col="outstanding"   label="Outstanding" title="Unpaid balance still owed"        right />
+                  <Th col="avgOrderValue" label="Avg Order"   title="Average value per order"          right />
                 </tr>
               </thead>
               <tbody>

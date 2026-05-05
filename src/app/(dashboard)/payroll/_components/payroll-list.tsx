@@ -99,7 +99,7 @@ export function PayrollList({ runs }: { runs: PayrollRun[] }) {
                   <TableCell className="font-medium">{label}</TableCell>
                   <TableCell>
                     {run.status === "FINALIZED" ? (
-                      <Badge variant="secondary" className="bg-green-100 text-green-700">
+                      <Badge variant="secondary" className="bg-emerald-100 text-emerald-700">
                         <Lock className="h-3 w-3 mr-1" />
                         Finalized
                       </Badge>

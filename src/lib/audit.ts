@@ -16,6 +16,7 @@ export type AuditAction =
   | "DAILY_LOG_AUTO_ADJUST"
   | "STOCK_CORRECTION"
   | "PAYMENT_EDIT"
+  | "PAYMENT_DELETE"
   | "SALES_RETURN_EDIT";
 
 export type WriteAuditLogParams = {

@@ -8,6 +8,7 @@ import {
   ChevronDown, Loader2,
 } from "lucide-react";
 import { approveRequest, rejectRequest } from "../actions";
+import { toast } from "sonner";
 
 type Status = "PENDING" | "APPROVED" | "REJECTED";
 
@@ -80,7 +81,7 @@ export function AccessRequestsClient({ requests, counts, activeTab }: Props) {
               <span className={`ml-1 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
                 active
                   ? key === "PENDING"  ? "bg-amber-100 text-amber-700"
-                  : key === "APPROVED" ? "bg-green-100 text-green-700"
+                  : key === "APPROVED" ? "bg-emerald-100 text-emerald-700"
                   :                     "bg-red-100 text-red-700"
                   : "bg-muted text-muted-foreground"
               }`}>
@@ -212,9 +213,12 @@ function ApproveModal({ req, onClose }: { req: AccessRequest; onClose: () => voi
     startTransition(async () => {
       try {
         await approveRequest({ id: req.id, email: req.workEmail, role, note: note || undefined });
+        toast.success(`Access approved for ${req.fullName}.`);
         onClose();
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Something went wrong");
+        const msg = err instanceof Error ? err.message : "Something went wrong";
+        setError(msg);
+        toast.error(msg);
       }
     });
   }
@@ -299,9 +303,12 @@ function RejectModal({ req, onClose }: { req: AccessRequest; onClose: () => void
     startTransition(async () => {
       try {
         await rejectRequest({ id: req.id, note: note || undefined });
+        toast.success(`Request from ${req.fullName} rejected.`);
         onClose();
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Something went wrong");
+        const msg = err instanceof Error ? err.message : "Something went wrong";
+        setError(msg);
+        toast.error(msg);
       }
     });
   }
@@ -384,7 +391,7 @@ function StatusBadge({ status }: { status: Status }) {
     </span>
   );
   if (status === "APPROVED") return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700">
+    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
       <CheckCircle2 className="h-2.5 w-2.5" /> Approved
     </span>
   );

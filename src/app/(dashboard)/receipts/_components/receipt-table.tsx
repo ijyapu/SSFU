@@ -27,14 +27,14 @@ const METHOD_LABELS: Record<string, string> = {
 };
 
 const METHOD_COLORS: Record<string, string> = {
-  CASH:          "bg-green-100 text-green-700",
-  BANK_TRANSFER: "bg-blue-100 text-blue-700",
-  CHECK:         "bg-purple-100 text-purple-700",
-  ESEWA:         "bg-emerald-100 text-emerald-700",
-  KHALTI:        "bg-violet-100 text-violet-700",
-  IME_PAY:       "bg-orange-100 text-orange-700",
-  FONEPAY:       "bg-cyan-100 text-cyan-700",
-  OTHER:         "bg-gray-100 text-gray-700",
+  CASH:          "bg-slate-100 text-slate-700",
+  BANK_TRANSFER: "bg-slate-100 text-slate-700",
+  CHECK:         "bg-slate-100 text-slate-700",
+  ESEWA:         "bg-slate-100 text-slate-700",
+  KHALTI:        "bg-slate-100 text-slate-700",
+  IME_PAY:       "bg-slate-100 text-slate-700",
+  FONEPAY:       "bg-slate-100 text-slate-700",
+  OTHER:         "bg-slate-100 text-slate-700",
 };
 
 type Receipt = {

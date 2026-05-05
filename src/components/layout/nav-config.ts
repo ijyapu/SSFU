@@ -17,6 +17,7 @@ import {
   Building2,
   FlaskConical,
   Wallet,
+  Banknote,
   type LucideIcon,
 } from "lucide-react";
 import type { PermissionKey } from "@/lib/roles";
@@ -117,6 +118,12 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: "Finance",
     items: [
+      {
+        title: "Cash Flow",
+        href: "/cash-flow",
+        icon: Banknote,
+        permission: "cashFlow",
+      },
       {
         title: "Expenses",
         href: "/expenses",

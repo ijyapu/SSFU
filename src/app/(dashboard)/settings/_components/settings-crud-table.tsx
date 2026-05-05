@@ -3,6 +3,7 @@
 import { useRef, useState, useTransition } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Pencil, Trash2, Plus, Check, X } from "lucide-react";
+import { toast } from "sonner";
 
 export interface CrudItem {
   id: string;
@@ -46,8 +47,11 @@ export function SettingsCrudTable({
         await onCreate(fd);
         (e.target as HTMLFormElement).reset();
         addRef.current?.focus();
+        toast.success(`${unit.charAt(0).toUpperCase() + unit.slice(1)} created.`);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to create.");
+        const msg = err instanceof Error ? err.message : "Failed to create.";
+        setError(msg);
+        toast.error(msg);
       }
     });
   }
@@ -60,8 +64,11 @@ export function SettingsCrudTable({
       try {
         await onRename(id, fd);
         setEditingId(null);
+        toast.success("Renamed successfully.");
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to rename.");
+        const msg = err instanceof Error ? err.message : "Failed to rename.";
+        setError(msg);
+        toast.error(msg);
       }
     });
   }
@@ -72,8 +79,11 @@ export function SettingsCrudTable({
     startTransition(async () => {
       try {
         await onDelete(id);
+        toast.success(`"${name}" deleted.`);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to delete.");
+        const msg = err instanceof Error ? err.message : "Failed to delete.";
+        setError(msg);
+        toast.error(msg);
       }
     });
   }

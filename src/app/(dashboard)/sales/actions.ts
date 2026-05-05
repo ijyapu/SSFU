@@ -864,6 +864,56 @@ export async function updateSalesmanPayment(paymentId: string, values: SalesmanP
   revalidatePath("/sales");
   revalidatePath("/sales/salesmen");
   revalidatePath("/salesmen/ledger");
+  revalidatePath("/cash-flow");
+}
+
+export async function deleteSalesmanPayment(paymentId: string): Promise<void> {
+  const userId = await requireSalesAccess();
+
+  const payment = await prisma.salesmanPayment.findUnique({
+    where:  { id: paymentId },
+    select: { salesOrderId: true, customerId: true, amount: true, paidAt: true },
+  });
+  if (!payment) throw new Error("Payment not found.");
+
+  await prisma.$transaction(async (tx) => {
+    await tx.salesmanPayment.delete({ where: { id: paymentId } });
+
+    // Recompute amountPaid from remaining payments to avoid drift
+    const remaining = await tx.salesmanPayment.findMany({
+      where:  { salesOrderId: payment.salesOrderId },
+      select: { amount: true },
+    });
+    const totalPaid = remaining.reduce((s, p) => s + Number(p.amount), 0);
+
+    const so = await tx.salesOrder.findUnique({
+      where:  { id: payment.salesOrderId },
+      select: { factoryAmount: true },
+    });
+    const factoryDue = Number(so?.factoryAmount ?? 0);
+    const newStatus  =
+      totalPaid >= factoryDue - 0.001 ? "PAID" :
+      totalPaid > 0                   ? "PARTIALLY_PAID" : "CONFIRMED";
+
+    await tx.salesOrder.update({
+      where: { id: payment.salesOrderId },
+      data:  { amountPaid: totalPaid, status: newStatus },
+    });
+  });
+
+  await writeAuditLog({
+    userId,
+    action:     "PAYMENT_DELETE",
+    entityType: "SalesmanPayment",
+    entityId:   paymentId,
+    before:     { amount: Number(payment.amount), paidAt: payment.paidAt.toISOString() },
+  });
+
+  revalidatePath(`/sales/${payment.salesOrderId}`);
+  revalidatePath("/sales");
+  revalidatePath("/sales/salesmen");
+  revalidatePath("/salesmen/ledger");
+  revalidatePath("/cash-flow");
 }
 
 // ─── Sales Returns ────────────────────────────

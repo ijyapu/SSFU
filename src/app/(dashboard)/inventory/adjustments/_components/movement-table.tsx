@@ -29,11 +29,11 @@ type Movement = {
 
 const TYPE_STYLES: Record<string, { label: string; className: string }> = {
   PURCHASE:       { label: "Purchase",    className: "bg-blue-100 text-blue-700" },
-  SALE:           { label: "Sale",        className: "bg-purple-100 text-purple-700" },
-  ADJUSTMENT_IN:  { label: "Adj. In",    className: "bg-green-100 text-green-700" },
+  SALE:           { label: "Sale",        className: "bg-amber-100 text-amber-700" },
+  ADJUSTMENT_IN:  { label: "Adj. In",    className: "bg-emerald-100 text-emerald-700" },
   ADJUSTMENT_OUT: { label: "Adj. Out",   className: "bg-red-100 text-red-700" },
-  RETURN_IN:      { label: "Return In",  className: "bg-teal-100 text-teal-700" },
-  RETURN_OUT:     { label: "Return Out", className: "bg-orange-100 text-orange-700" },
+  RETURN_IN:      { label: "Return In",  className: "bg-emerald-100 text-emerald-700" },
+  RETURN_OUT:     { label: "Return Out", className: "bg-red-100 text-red-700" },
 };
 
 const DECREASE_TYPES = ["SALE", "ADJUSTMENT_OUT", "RETURN_OUT"];

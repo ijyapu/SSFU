@@ -316,6 +316,7 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold tabular-nums">{fmt(revenue)}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Total billed on sales orders</p>
             {revPct !== null && (
               <p className={`text-xs mt-1 flex items-center gap-1 ${revPct >= 0 ? "text-emerald-600" : "text-destructive"}`}>
                 {revPct >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
@@ -334,6 +335,7 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold tabular-nums">{fmt(purchases)}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Cost of goods received</p>
             {purPct !== null && (
               <p className={`text-xs mt-1 flex items-center gap-1 ${purPct <= 0 ? "text-emerald-600" : "text-amber-600"}`}>
                 {purPct <= 0 ? <TrendingDown className="h-3 w-3" /> : <TrendingUp className="h-3 w-3" />}
@@ -354,7 +356,8 @@ export default async function DashboardPage() {
             <p className={`text-2xl font-bold tabular-nums ${grossProfit < 0 ? "text-destructive" : ""}`}>
               {fmt(grossProfit)}
             </p>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-xs text-muted-foreground mt-0.5">Revenue minus purchase cost</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
               {revenue > 0 ? `${((grossProfit / revenue) * 100).toFixed(1)}% margin` : "No revenue yet"}
             </p>
           </CardContent>

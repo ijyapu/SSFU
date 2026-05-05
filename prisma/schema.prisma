@@ -794,8 +794,9 @@ model CompanySettings {
   pan         String
   owner       String
   established Int
-  updatedAt   DateTime @updatedAt
-  updatedBy   String?
+  updatedAt          DateTime @updatedAt
+  updatedBy          String?
+  cashOpeningBalance Decimal  @default(0) @db.Decimal(12, 2)
 }
 
 // ─────────────────────────────────────────────

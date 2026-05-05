@@ -21,15 +21,15 @@ type Movement = {
 };
 
 const TYPE_LABELS: Record<string, { label: string; color: string }> = {
-  ADJUSTMENT_IN:  { label: "Adjustment In",   color: "bg-green-100 text-green-700" },
-  ADJUSTMENT_OUT: { label: "Adjustment Out",  color: "bg-red-100 text-red-700" },
-  PURCHASE:       { label: "Purchase",         color: "bg-blue-100 text-blue-700" },
-  SALE:           { label: "Sale",             color: "bg-orange-100 text-orange-700" },
-  PRODUCTION_IN:  { label: "Production In",   color: "bg-purple-100 text-purple-700" },
-  PRODUCTION_OUT: { label: "Production Out",  color: "bg-pink-100 text-pink-700" },
-  RETURN_IN:      { label: "Return In",        color: "bg-teal-100 text-teal-700" },
-  RETURN_OUT:     { label: "Return Out",       color: "bg-yellow-100 text-yellow-700" },
-  OPENING_STOCK:  { label: "Opening Stock",   color: "bg-gray-100 text-gray-700" },
+  ADJUSTMENT_IN:  { label: "Adjustment In",  color: "bg-emerald-100 text-emerald-700" },
+  ADJUSTMENT_OUT: { label: "Adjustment Out", color: "bg-red-100 text-red-700" },
+  PURCHASE:       { label: "Purchase",        color: "bg-blue-100 text-blue-700" },
+  SALE:           { label: "Sale",            color: "bg-amber-100 text-amber-700" },
+  PRODUCTION_IN:  { label: "Production In",  color: "bg-emerald-100 text-emerald-700" },
+  PRODUCTION_OUT: { label: "Production Out", color: "bg-amber-100 text-amber-700" },
+  RETURN_IN:      { label: "Return In",       color: "bg-emerald-100 text-emerald-700" },
+  RETURN_OUT:     { label: "Return Out",      color: "bg-red-100 text-red-700" },
+  OPENING_STOCK:  { label: "Opening Stock",  color: "bg-slate-100 text-slate-600" },
 };
 
 export function ProductMovementHistory({

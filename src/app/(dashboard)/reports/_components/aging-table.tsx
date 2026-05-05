@@ -73,6 +73,14 @@ export function AgingTable({ rows, partyLabel, orderLabel, linkBase }: Props) {
 
   return (
     <div className="space-y-4">
+      {/* Page description */}
+      <p className="text-sm text-muted-foreground">
+        {partyLabel === "Salesman"
+          ? "Money owed to you by salesmen — sales confirmed but not yet fully paid."
+          : "Money you owe to suppliers — received goods not yet fully paid."}
+        {" "}Click a bucket to filter by age.
+      </p>
+
       {/* Summary bands */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
         {BUCKETS.map((b) => (
@@ -111,10 +119,10 @@ export function AgingTable({ rows, partyLabel, orderLabel, linkBase }: Props) {
                   <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground"><SortButton col="partyName"   label={partyLabel}  {...sp} /></th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground hidden md:table-cell"><SortButton col="orderDate" label="Date" {...sp} /></th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground hidden md:table-cell"><SortButton col="dueDate"   label="Due"  {...sp} /></th>
-                  <th className="px-4 py-3 text-right tabular-nums text-xs font-medium text-muted-foreground"><SortButton col="totalAmount"  label="Total"       {...sp} className="justify-end" /></th>
-                  <th className="px-4 py-3 text-right tabular-nums text-xs font-medium text-muted-foreground"><SortButton col="amountPaid"   label="Paid"        {...sp} className="justify-end" /></th>
-                  <th className="px-4 py-3 text-right tabular-nums text-xs font-medium text-muted-foreground"><SortButton col="outstanding"  label="Outstanding" {...sp} className="justify-end" /></th>
-                  <th className="px-4 py-3 text-right tabular-nums text-xs font-medium text-muted-foreground"><SortButton col="ageDays"      label="Age"         {...sp} className="justify-end" /></th>
+                  <th title="Original order amount" className="px-4 py-3 text-right tabular-nums text-xs font-medium text-muted-foreground"><SortButton col="totalAmount"  label="Total"       {...sp} className="justify-end" /></th>
+                  <th title="Amount paid so far" className="px-4 py-3 text-right tabular-nums text-xs font-medium text-muted-foreground"><SortButton col="amountPaid"   label="Paid"        {...sp} className="justify-end" /></th>
+                  <th title="Unpaid balance remaining" className="px-4 py-3 text-right tabular-nums text-xs font-medium text-muted-foreground"><SortButton col="outstanding"  label="Outstanding" {...sp} className="justify-end" /></th>
+                  <th title="Days since due date" className="px-4 py-3 text-right tabular-nums text-xs font-medium text-muted-foreground"><SortButton col="ageDays"      label="Age"         {...sp} className="justify-end" /></th>
                 </tr>
                 ); })()}
               </thead>

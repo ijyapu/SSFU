@@ -23,7 +23,7 @@ import { approveExpense, rejectExpense, deleteExpense } from "../actions";
 
 const STATUS_CONFIG = {
   SUBMITTED: { label: "Pending",  className: "bg-amber-100 text-amber-700" },
-  APPROVED:  { label: "Paid",     className: "bg-green-100 text-green-700" },
+  APPROVED:  { label: "Paid",     className: "bg-emerald-100 text-emerald-700" },
   REJECTED:  { label: "Rejected", className: "bg-red-100 text-red-700" },
 } as const;
 

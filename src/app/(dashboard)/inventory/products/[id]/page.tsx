@@ -66,7 +66,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   }));
 
   const statusConfig = {
-    ok:  { label: "In Stock",     className: "bg-green-100 text-green-700" },
+    ok:  { label: "In Stock",     className: "bg-emerald-100 text-emerald-700" },
     low: { label: "Low Stock",    className: "bg-amber-100 text-amber-700" },
     out: { label: "Out of Stock", className: "bg-red-100 text-red-700" },
   };

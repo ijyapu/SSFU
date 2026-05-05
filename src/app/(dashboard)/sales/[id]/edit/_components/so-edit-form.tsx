@@ -78,9 +78,16 @@ export function SoEditForm({ so, products }: { so: SoData; products: Product[] }
   function handleProductChange(index: number, productId: string) {
     const product = productMap.get(productId);
     if (product) {
+      const oldQty  = so.items.find((i) => i.productId === productId)?.quantity ?? 0;
+      const available = product.currentStock + oldQty;
+      if (available <= 0) {
+        toast.error(`"${product.name}" is out of stock`, {
+          description: "This product has no available stock. Restock before adding to this order.",
+        });
+        return;
+      }
       form.setValue(`items.${index}.productId`, productId);
       form.setValue(`items.${index}.unitPrice`, product.sellingPrice);
-      // Auto-append a new empty row when the user fills the last row
       if (index === fields.length - 1) {
         append({ productId: "", quantity: 1, unitPrice: 0 });
       }
@@ -105,6 +112,19 @@ export function SoEditForm({ so, products }: { so: SoData; products: Product[] }
         if (filled.length === 0) {
           form.setError("items", { type: "manual", message: "Add at least one item" });
           return;
+        }
+        for (const item of filled) {
+          const product = productMap.get(item.productId);
+          if (product) {
+            const oldQty    = so.items.find((i) => i.productId === item.productId)?.quantity ?? 0;
+            const available = product.currentStock + oldQty;
+            if (item.quantity > available) {
+              toast.error(`Not enough stock for "${product.name}"`, {
+                description: `Available: ${available.toLocaleString(undefined, { maximumFractionDigits: 3 })} ${product.unit.name} — ordered: ${item.quantity.toLocaleString(undefined, { maximumFractionDigits: 3 })}`,
+              });
+              return;
+            }
+          }
         }
         form.setValue("items", filled, { shouldValidate: false });
         form.handleSubmit(onSubmit)();
@@ -231,13 +251,18 @@ export function SoEditForm({ so, products }: { so: SoData; products: Product[] }
                                         handleProductChange(index, p.id);
                                         setOpenCombobox((prev) => ({ ...prev, [index]: false }));
                                       }}
+                                      className={p.currentStock <= 0 ? "opacity-60" : ""}
                                     >
                                       <Check className={cn("mr-2 h-3.5 w-3.5 shrink-0", f.value === p.id ? "opacity-100" : "opacity-0")} />
                                       <div className="flex-1 min-w-0">
                                         <span className="truncate">{p.name}</span>
-                                        <span className="ml-1.5 text-xs text-muted-foreground">
-                                          {p.currentStock.toLocaleString(undefined, { maximumFractionDigits: 3 })} {p.unit.name}
-                                        </span>
+                                        {p.currentStock <= 0 ? (
+                                          <span className="ml-1.5 text-xs text-destructive font-medium">Out of stock</span>
+                                        ) : (
+                                          <span className="ml-1.5 text-xs text-muted-foreground">
+                                            {p.currentStock.toLocaleString(undefined, { maximumFractionDigits: 3 })} {p.unit.name}
+                                          </span>
+                                        )}
                                       </div>
                                     </CommandItem>
                                   ))}
@@ -247,11 +272,18 @@ export function SoEditForm({ so, products }: { so: SoData; products: Product[] }
                           </PopoverContent>
                         </Popover>
                         {product && (
-                          <p className="text-xs text-muted-foreground pt-0.5">
-                            {available <= 0
-                              ? <span className="text-destructive">Out of stock</span>
-                              : `${available.toLocaleString(undefined, { maximumFractionDigits: 3 })} ${product.unit.name} available`
-                            }
+                          <p className="text-xs pt-0.5">
+                            {available <= 0 ? (
+                              <span className="text-destructive font-medium">Out of stock</span>
+                            ) : qty > 0 && qty > available ? (
+                              <span className="text-destructive">
+                                Only {available.toLocaleString(undefined, { maximumFractionDigits: 3 })} {product.unit.name} available
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">
+                                {available.toLocaleString(undefined, { maximumFractionDigits: 3 })} {product.unit.name} available
+                              </span>
+                            )}
                           </p>
                         )}
                         <FormMessage />
