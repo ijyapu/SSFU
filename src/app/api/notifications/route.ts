@@ -136,7 +136,7 @@ export async function GET() {
         type:        "new_user",
         title:       "New access requests",
         description: `${pendingUsers} user${pendingUsers !== 1 ? "s" : ""} waiting for role assignment`,
-        href:        "/settings/access-requests",
+        href:        "/settings/users",
         severity:    "warning",
       });
     }

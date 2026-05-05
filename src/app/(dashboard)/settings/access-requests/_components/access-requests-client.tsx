@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import {
   CheckCircle2, XCircle, Clock, Mail,
@@ -26,9 +25,8 @@ interface AccessRequest {
 }
 
 interface Props {
-  requests:  AccessRequest[];
-  counts:    Record<Status, number>;
-  activeTab: Status;
+  requests: AccessRequest[];
+  counts:   Record<Status, number>;
 }
 
 const ROLES = [
@@ -46,12 +44,10 @@ const TAB_CONFIG: { key: Status; label: string; icon: React.ElementType; color: 
   { key: "REJECTED", label: "Rejected", icon: XCircle,       color: "text-red-600"   },
 ];
 
-export function AccessRequestsClient({ requests, counts, activeTab }: Props) {
-  const router = useRouter();
+export function AccessRequestsClient({ requests, counts }: Props) {
+  const [activeTab, setActiveTab] = useState<Status>("PENDING");
 
-  function setTab(tab: Status) {
-    router.push(`/settings/access-requests?tab=${tab}`);
-  }
+  const visible = requests.filter((r) => r.status === activeTab);
 
   return (
     <div className="space-y-6">
@@ -69,7 +65,7 @@ export function AccessRequestsClient({ requests, counts, activeTab }: Props) {
           return (
             <button
               key={key}
-              onClick={() => setTab(key)}
+              onClick={() => setActiveTab(key)}
               className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-t-md transition-colors border border-transparent ${
                 active
                   ? "bg-background text-foreground border-border border-b-background -mb-px"
@@ -93,7 +89,7 @@ export function AccessRequestsClient({ requests, counts, activeTab }: Props) {
       </div>
 
       {/* Request list */}
-      {requests.length === 0 ? (
+      {visible.length === 0 ? (
         <div className="rounded-xl border border-border bg-card p-12 text-center">
           <p className="text-sm text-muted-foreground">
             No {activeTab.toLowerCase()} requests.
@@ -101,7 +97,7 @@ export function AccessRequestsClient({ requests, counts, activeTab }: Props) {
         </div>
       ) : (
         <div className="space-y-3">
-          {requests.map((req) => (
+          {visible.map((req) => (
             <RequestCard key={req.id} req={req} />
           ))}
         </div>
