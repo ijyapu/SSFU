@@ -2,6 +2,7 @@ import Link from "next/link";
 import { startOfMonth, subMonths, format } from "date-fns";
 import { prisma } from "@/lib/prisma";
 import { requireMinRole } from "@/lib/auth";
+import { currentUser } from "@clerk/nextjs/server";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button-variants";
 import {
@@ -27,6 +28,8 @@ function pctChange(current: number, previous: number) {
 export default async function DashboardPage() {
   await requireMinRole("employee");
 
+  const user           = await currentUser();
+  const firstName      = user?.firstName ?? user?.username ?? "there";
   const now            = new Date();
   const monthStart     = startOfMonth(now);
   const lastMonthStart = startOfMonth(subMonths(now, 1));
@@ -275,7 +278,7 @@ export default async function DashboardPage() {
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs text-muted-foreground font-medium">{COMPANY.name}</p>
-          <h1 className="text-xl font-semibold tracking-tight mt-0.5">Overview</h1>
+          <h1 className="text-xl font-semibold tracking-tight mt-0.5">Welcome, {firstName}</h1>
           <p className="text-muted-foreground text-sm mt-0.5">{format(now, "EEEE, d MMMM yyyy")}</p>
           <p className="text-muted-foreground/60 text-xs mt-0.5">{toNepaliDateString(now)}</p>
         </div>
