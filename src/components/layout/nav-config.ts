@@ -46,18 +46,18 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    label: "Commerce",
+    label: "Operations",
     items: [
-      {
-        title: "Inventory",
-        href: "/inventory",
-        icon: Package,
-        permission: "inventory",
-      },
       {
         title: "Daily Log",
         href: "/daily-log",
         icon: ClipboardList,
+        permission: "inventory",
+      },
+      {
+        title: "Inventory",
+        href: "/inventory",
+        icon: Package,
         permission: "inventory",
       },
       {
@@ -66,6 +66,58 @@ export const NAV_GROUPS: NavGroup[] = [
         icon: ShoppingCart,
         permission: "purchases",
       },
+      {
+        title: "Sales",
+        href: "/sales",
+        icon: TrendingUp,
+        permission: "sales",
+      },
+      {
+        title: "Costing",
+        href: "/costing",
+        icon: Calculator,
+        permission: "costing",
+      },
+      {
+        title: "Recipes",
+        href: "/costing/recipes",
+        icon: FlaskConical,
+        permission: "adminOverride",
+      },
+    ],
+  },
+  {
+    label: "Money",
+    items: [
+      {
+        title: "Cash Flow",
+        href: "/cash-flow",
+        icon: Banknote,
+        permission: "cashFlow",
+      },
+      {
+        title: "Receipts",
+        href: "/receipts",
+        icon: Wallet,
+        permission: "receipts",
+      },
+      {
+        title: "Expenses",
+        href: "/expenses",
+        icon: Receipt,
+        permission: "expenses",
+      },
+      {
+        title: "Profit & Loss",
+        href: "/profit-loss",
+        icon: BarChart3,
+        permission: "profitLoss",
+      },
+    ],
+  },
+  {
+    label: "Ledgers",
+    items: [
       {
         title: "Vendors",
         href: "/vendors",
@@ -77,12 +129,6 @@ export const NAV_GROUPS: NavGroup[] = [
         href: "/vendors/ledger",
         icon: BookOpen,
         permission: "purchases",
-      },
-      {
-        title: "Sales",
-        href: "/sales",
-        icon: TrendingUp,
-        permission: "sales",
       },
       {
         title: "Salesmen",
@@ -116,44 +162,8 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    label: "Finance",
+    label: "Reports",
     items: [
-      {
-        title: "Cash Flow",
-        href: "/cash-flow",
-        icon: Banknote,
-        permission: "cashFlow",
-      },
-      {
-        title: "Expenses",
-        href: "/expenses",
-        icon: Receipt,
-        permission: "expenses",
-      },
-      {
-        title: "Receipts",
-        href: "/receipts",
-        icon: Wallet,
-        permission: "receipts",
-      },
-      {
-        title: "Costing",
-        href: "/costing",
-        icon: Calculator,
-        permission: "costing",
-      },
-      {
-        title: "Recipes",
-        href: "/costing/recipes",
-        icon: FlaskConical,
-        permission: "adminOverride",
-      },
-      {
-        title: "Profit & Loss",
-        href: "/profit-loss",
-        icon: BarChart3,
-        permission: "profitLoss",
-      },
       {
         title: "Reports",
         href: "/reports",
