@@ -2,11 +2,17 @@ import { prisma } from "@/lib/prisma";
 import { requirePermission } from "@/lib/auth";
 import { ERPPageHeader } from "@/components/ui/erp-page-header";
 import { PurchaseForm } from "./_components/po-form";
+import { purchaseListHref } from "@/lib/purchase-nav";
 
 export const metadata = { title: "New Purchase" };
 
-export default async function NewPurchasePage() {
+export default async function NewPurchasePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ from?: string; to?: string }>;
+}) {
   await requirePermission("purchases");
+  const { from: rawFrom, to: rawTo } = await searchParams;
 
   const [suppliers, products, categories, units, openLog] = await Promise.all([
     prisma.supplier.findMany({
@@ -35,7 +41,7 @@ export default async function NewPurchasePage() {
       <ERPPageHeader
         title="New Purchase"
         subtitle="Log a supplier invoice and update inventory"
-        backHref="/purchases"
+        backHref={purchaseListHref(rawFrom, rawTo)}
       />
 
       <PurchaseForm
@@ -44,6 +50,7 @@ export default async function NewPurchasePage() {
         categories={categories}
         units={units}
         openLogDate={openLogDate}
+        detailHref={purchaseListHref(rawFrom, rawTo)}
       />
     </div>
   );

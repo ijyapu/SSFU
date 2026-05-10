@@ -6,6 +6,7 @@ import { requirePermission } from "@/lib/auth";
 import { COMPANY } from "@/lib/company";
 import { ArrowLeft } from "lucide-react";
 import { LedgerControls } from "./_components/ledger-controls";
+import { receiptsListHref } from "@/lib/receipt-nav";
 
 export const metadata = { title: "Receipt Ledger" };
 
@@ -116,7 +117,7 @@ export default async function ReceiptLedgerPage({
         <div className="space-y-3 no-print">
           <div className="flex items-center gap-3">
             <Link
-              href="/receipts"
+              href={receiptsListHref(rawFrom, rawTo)}
               className="inline-flex items-center justify-center rounded-md p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
               aria-label="Back to Receipts"
             >

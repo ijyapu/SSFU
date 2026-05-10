@@ -124,7 +124,7 @@ export default async function SalesPage({ searchParams }: Props) {
       </div>
 
       <div className="flex-1 min-h-0">
-        <SoTable orders={serialised} />
+        <SoTable orders={serialised} from={rawFrom} to={rawTo} />
       </div>
     </div>
   );

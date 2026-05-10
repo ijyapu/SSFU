@@ -8,6 +8,7 @@ import { buttonVariants } from "@/components/ui/button-variants";
 import { cn } from "@/lib/utils";
 import { DateFilter } from "@/components/ui/date-filter";
 import { Plus } from "lucide-react";
+import { purchaseNewHref } from "@/lib/purchase-nav";
 
 export const metadata = { title: "Purchases" };
 
@@ -53,7 +54,7 @@ export default async function PurchasesPage({ searchParams }: Props) {
         title="Purchases"
         subtitle={`${serialised.length} invoice${serialised.length !== 1 ? "s" : ""}`}
         action={
-          <Link href="/purchases/new" className={cn(buttonVariants({}))}>
+          <Link href={purchaseNewHref(rawFrom, rawTo)} className={cn(buttonVariants({}))}>
             <Plus className="h-4 w-4" />
             New Purchase
           </Link>
@@ -72,7 +73,7 @@ export default async function PurchasesPage({ searchParams }: Props) {
         <p className="text-xs text-muted-foreground mt-1">All invoice totals · payments tracked in Vendor Ledger</p>
       </div>
 
-      <PurchaseTable purchases={serialised} suppliers={suppliers} />
+      <PurchaseTable purchases={serialised} suppliers={suppliers} from={rawFrom} to={rawTo} />
     </div>
   );
 }

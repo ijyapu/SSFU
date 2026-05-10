@@ -6,6 +6,7 @@ import { requirePermission } from "@/lib/auth";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { cn } from "@/lib/utils";
 import { ReturnFormPage } from "./_components/return-form-page";
+import { salesOrderHref } from "@/lib/sales-nav";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -18,11 +19,14 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
 export default async function RecordWastePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ from?: string; to?: string }>;
 }) {
   await requirePermission("sales");
   const { id } = await params;
+  const { from, to } = await searchParams;
 
   const [so, rawProducts] = await Promise.all([
     prisma.salesOrder.findUnique({
@@ -56,7 +60,7 @@ export default async function RecordWastePage({
       {/* Page header */}
       <div className="flex items-center gap-3">
         <Link
-          href={`/sales/${id}`}
+          href={salesOrderHref(id, from, to)}
           className={cn(buttonVariants({ variant: "ghost", size: "icon-sm" }))}
         >
           <ArrowLeft className="h-4 w-4" />
@@ -75,7 +79,7 @@ export default async function RecordWastePage({
         </div>
       </div>
 
-      <ReturnFormPage soId={id} products={products} />
+      <ReturnFormPage soId={id} products={products} detailHref={salesOrderHref(id, from, to)} />
     </div>
   );
 }

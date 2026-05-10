@@ -41,7 +41,7 @@ type Product = {
   unit: { name: string };
 };
 
-export function SoEditForm({ so, products }: { so: SoData; products: Product[] }) {
+export function SoEditForm({ so, products, detailHref }: { so: SoData; products: Product[]; detailHref: string }) {
   const router = useRouter();
   const [openCombobox, setOpenCombobox] = useState<Record<number, boolean>>({});
   const savedScrollY = useRef(0);
@@ -98,7 +98,7 @@ export function SoEditForm({ so, products }: { so: SoData; products: Product[] }
     try {
       await updateSalesOrder(so.id, values);
       toast.success("Sales order updated");
-      router.push(`/sales/${so.id}`);
+      router.push(detailHref);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to update order");
     }
@@ -397,7 +397,7 @@ export function SoEditForm({ so, products }: { so: SoData; products: Product[] }
         <Separator />
 
         <div className="flex justify-end gap-2">
-          <Button type="button" variant="outline" onClick={() => router.push(`/sales/${so.id}`)}>
+          <Button type="button" variant="outline" onClick={() => router.push(detailHref)}>
             Cancel
           </Button>
           <Button type="submit" disabled={form.formState.isSubmitting}>

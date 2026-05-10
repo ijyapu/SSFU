@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import Link from "next/link";
 import { deletePurchase } from "../actions";
+import { purchaseEditHref } from "@/lib/purchase-nav";
 
 type Purchase = {
   id: string;
@@ -54,9 +55,13 @@ function SortableHead({ col, label, className, numeric, sortKey, sortDir, toggle
 export function PurchaseTable({
   purchases,
   suppliers,
+  from,
+  to,
 }: {
   purchases: Purchase[];
   suppliers: Supplier[];
+  from?: string;
+  to?: string;
 }) {
   const [search,           setSearch]           = useState("");
   const [activeSupplier,   setActiveSupplier]   = useState<string | null>(null);
@@ -200,7 +205,7 @@ export function PurchaseTable({
                         <Printer className="h-3.5 w-3.5" />
                       </Button>
                     </Link>
-                    <Link href={`/purchases/${p.id}/edit`}>
+                    <Link href={purchaseEditHref(p.id, from, to)}>
                       <Button variant="ghost" size="icon-sm">
                         <Pencil className="h-3.5 w-3.5" />
                       </Button>

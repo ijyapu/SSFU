@@ -34,9 +34,11 @@ const fmt = (n: number) =>
 export function ReturnFormPage({
   soId,
   products,
+  detailHref,
 }: {
   soId: string;
   products: Product[];
+  detailHref: string;
 }) {
   const router = useRouter();
   const [lines,   setLines]   = useState<LineItem[]>(() => [emptyLine()]);
@@ -97,7 +99,7 @@ export function ReturnFormPage({
     try {
       await processSalesReturn(soId, { notes: notes.trim() || undefined, returnType: "WASTE", items: returnItems });
       toast.success("Waste return recorded successfully");
-      router.push(`/sales/${soId}`);
+      router.push(detailHref);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to record return");
       setLoading(false);
@@ -321,7 +323,7 @@ export function ReturnFormPage({
           </Button>
           <Button
             variant="outline" className="w-full"
-            onClick={() => router.push(`/sales/${soId}`)}
+            onClick={() => router.push(detailHref)}
             disabled={loading}
           >
             Cancel

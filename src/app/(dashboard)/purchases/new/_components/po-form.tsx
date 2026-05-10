@@ -39,6 +39,7 @@ type Props = {
   purchaseId?:   string;
   initialValues?: Partial<CreatePurchaseValues>;
   openLogDate?:  string; // YYYY-MM-DD of the currently open daily log
+  detailHref?:   string;
 };
 
 // ── Product Combobox ─────────────────────────────────────────────────────────
@@ -153,7 +154,7 @@ function ProductCombobox({
 }
 
 // ── Main Form ────────────────────────────────────────────────────────────────
-export function PurchaseForm({ suppliers: initSuppliers, products: initProducts, categories, units, purchaseId, initialValues, openLogDate }: Props) {
+export function PurchaseForm({ suppliers: initSuppliers, products: initProducts, categories, units, purchaseId, initialValues, openLogDate, detailHref }: Props) {
   const router = useRouter();
   const [suppliers, setSuppliers]       = useState(initSuppliers);
   const [products,  setProducts]        = useState(initProducts);
@@ -208,7 +209,7 @@ export function PurchaseForm({ suppliers: initSuppliers, products: initProducts,
         await createPurchase(payload);
         toast.success(`Purchase ${values.invoiceNo} logged and inventory updated`);
       }
-      router.push("/purchases");
+      router.push(detailHref ?? "/purchases");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : purchaseId ? "Failed to update purchase" : "Failed to create purchase");
     }
@@ -680,7 +681,7 @@ export function PurchaseForm({ suppliers: initSuppliers, products: initProducts,
 
           {/* ── Submit ── */}
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => router.push("/purchases")}>Cancel</Button>
+            <Button type="button" variant="outline" onClick={() => router.push(detailHref ?? "/purchases")}>Cancel</Button>
             <Button type="submit" disabled={form.formState.isSubmitting}>
               {form.formState.isSubmitting ? "Saving..." : purchaseId ? "Save Changes" : "Log Purchase & Update Inventory"}
             </Button>

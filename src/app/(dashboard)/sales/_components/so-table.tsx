@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
 import { SortButton } from "@/components/ui/sort-icon";
 import { useSortable, compareValues } from "@/hooks/use-sortable";
 import { deleteSalesOrder } from "../actions";
+import { salesOrderHref } from "@/lib/sales-nav";
 
 const STATUS_CONFIG = {
   DRAFT:          { label: "Draft",               className: "bg-muted text-muted-foreground" },
@@ -44,7 +45,7 @@ type SO = {
   amountPaid: number;
 };
 
-export function SoTable({ orders }: { orders: SO[] }) {
+export function SoTable({ orders, from, to }: { orders: SO[]; from?: string; to?: string }) {
   const [search,          setSearch]          = useState("");
   const [statusFilter,    setStatusFilter]    = useState("all");
   const [activeSalesman,  setActiveSalesman]  = useState<string | null>(null);
@@ -211,7 +212,7 @@ export function SoTable({ orders }: { orders: SO[] }) {
                     <TableCell>
                       <div className="flex items-center gap-1">
                         <Link
-                          href={`/sales/${so.id}`}
+                          href={salesOrderHref(so.id, from, to)}
                           className={cn(buttonVariants({ variant: "ghost", size: "icon-sm" }))}
                         >
                           <ExternalLink className="h-3.5 w-3.5" />

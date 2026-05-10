@@ -3,16 +3,20 @@ import { prisma } from "@/lib/prisma";
 import { requirePermission } from "@/lib/auth";
 import { ERPPageHeader } from "@/components/ui/erp-page-header";
 import { PurchaseForm } from "../../new/_components/po-form";
+import { purchaseListHref } from "@/lib/purchase-nav";
 
 export const metadata = { title: "Edit Purchase" };
 
 export default async function EditPurchasePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ from?: string; to?: string }>;
 }) {
   await requirePermission("purchases");
   const { id } = await params;
+  const { from: rawFrom, to: rawTo } = await searchParams;
 
   const [purchase, suppliers, products, categories, units] = await Promise.all([
     prisma.purchase.findUnique({
@@ -63,7 +67,7 @@ export default async function EditPurchasePage({
       <ERPPageHeader
         title="Edit Purchase"
         subtitle={purchase.invoiceNo}
-        backHref="/purchases"
+        backHref={purchaseListHref(rawFrom, rawTo)}
       />
 
       <PurchaseForm
@@ -73,6 +77,7 @@ export default async function EditPurchasePage({
         units={units}
         purchaseId={id}
         initialValues={initialValues}
+        detailHref={purchaseListHref(rawFrom, rawTo)}
       />
     </div>
   );

@@ -9,6 +9,7 @@ import { ReceiptFormDialog } from "./_components/receipt-form-dialog";
 import { ReceiptTable } from "./_components/receipt-table";
 import { ReceiptPaymentFormDialog } from "./_components/receipt-payment-form-dialog";
 import { ReceiptPaymentTable } from "./_components/receipt-payment-table";
+import { receiptsLedgerHref } from "@/lib/receipt-nav";
 
 export const metadata = { title: "Receipts" };
 
@@ -83,7 +84,7 @@ export default async function ReceiptsPage({ searchParams }: Props) {
         </div>
         <div className="flex items-center gap-2">
           <Link
-            href="/receipts/ledger"
+            href={receiptsLedgerHref(rawFrom, rawTo)}
             className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium shadow-sm hover:bg-muted transition-colors"
           >
             <BookOpen className="h-4 w-4" />

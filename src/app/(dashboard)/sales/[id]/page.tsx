@@ -6,6 +6,7 @@ import { buttonVariants } from "@/components/ui/button-variants";
 import { cn } from "@/lib/utils";
 import { ArrowLeft } from "lucide-react";
 import { SoDetail } from "./_components/so-detail";
+import { salesListHref, salesEditHref } from "@/lib/sales-nav";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -20,11 +21,14 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
 export default async function SalesOrderDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ from?: string; to?: string }>;
 }) {
   await requirePermission("sales");
   const { id } = await params;
+  const { from, to } = await searchParams;
 
   const [so, rawProducts] = await Promise.all([
     prisma.salesOrder.findUnique({
@@ -122,7 +126,7 @@ export default async function SalesOrderDetailPage({
     <div className="space-y-6">
       <div className="flex items-center gap-2">
         <Link
-          href="/sales"
+          href={salesListHref(from, to)}
           className={cn(buttonVariants({ variant: "ghost", size: "icon-sm" }))}
         >
           <ArrowLeft className="h-4 w-4" />
@@ -133,7 +137,7 @@ export default async function SalesOrderDetailPage({
         </div>
       </div>
 
-      <SoDetail {...serialised} />
+      <SoDetail {...serialised} editHref={salesEditHref(id, from, to)} />
     </div>
   );
 }

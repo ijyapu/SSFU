@@ -99,6 +99,7 @@ type Props = {
   returns: SalesReturn[];
   products: Product[];
   salesmanTotalOutstanding: number;
+  editHref?: string;
 };
 
 export function SoDetail(props: Props) {
@@ -106,6 +107,7 @@ export function SoDetail(props: Props) {
     id, orderNumber, status, customerName, orderDate,
     notes, totalAmount, commissionPct, commissionAmount, factoryAmount,
     amountPaid, items, payments, returns, products, salesmanTotalOutstanding,
+    editHref,
   } = props;
 
   const [paymentOpen,    setPaymentOpen]    = useState(false);
@@ -225,7 +227,7 @@ export function SoDetail(props: Props) {
           </Link>
           {canEdit && (
             <Link
-              href={`/sales/${id}/edit`}
+              href={editHref ?? `/sales/${id}/edit`}
               className={cn(buttonVariants({ variant: "outline" }))}
             >
               <Pencil className="h-4 w-4" />
