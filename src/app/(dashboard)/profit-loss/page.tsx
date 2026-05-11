@@ -32,14 +32,14 @@ export default async function ProfitLossPage({
   // ── Data queries ──────────────────────────────
 
   const [salesOrders, purchaseMovements, expenses, payrollItems] = await Promise.all([
-    // Revenue: confirmed+ sales in period
+    // Revenue: active sales in period (exclude draft, cancelled, and written-off orders)
     prisma.salesOrder.findMany({
       where: {
-        status:    { notIn: ["CANCELLED", "DRAFT"] },
+        status:    { notIn: ["CANCELLED", "DRAFT", "LOST"] },
         orderDate: { gte: fromDate, lte: toDate },
         deletedAt: null,
       },
-      select: { factoryAmount: true },
+      select: { totalAmount: true, commissionAmount: true, factoryAmount: true },
     }),
 
     // COGS: stock movements of type PURCHASE in period (goods actually received)
@@ -93,8 +93,11 @@ export default async function ProfitLossPage({
     }),
   ]);
 
-  // Aggregate revenue
-  const revenue = salesOrders.reduce((s, o) => s + Number(o.factoryAmount), 0);
+  // Revenue breakdown
+  const grossSales = salesOrders.reduce((s, o) => s + Number(o.totalAmount),      0);
+  const commission = salesOrders.reduce((s, o) => s + Number(o.commissionAmount), 0);
+  const revenue    = salesOrders.reduce((s, o) => s + Number(o.factoryAmount),    0);
+  // Invariant: grossSales − commission === revenue (guaranteed by DB fields)
 
   // Aggregate COGS
   const cogs = purchaseMovements.reduce((s, m) => {
@@ -133,6 +136,8 @@ export default async function ProfitLossPage({
       </Suspense>
 
       <PlBreakdown
+        grossSales={grossSales}
+        commission={commission}
         revenue={revenue}
         cogs={cogs}
         expenses={expenseLines}

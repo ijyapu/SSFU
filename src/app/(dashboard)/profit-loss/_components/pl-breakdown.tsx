@@ -7,7 +7,9 @@ import { Separator } from "@/components/ui/separator";
 type CategoryLine = { name: string; amount: number };
 
 type Props = {
-  revenue:    number;
+  grossSales: number;
+  commission: number;
+  revenue:    number;  // factoryRevenue = grossSales − commission
   cogs:       number;
   expenses:   CategoryLine[];
   payroll:    number;
@@ -23,7 +25,7 @@ function ProfitIndicator({ value }: { value: number }) {
   return                <Minus        className="h-5 w-5 text-muted-foreground" />;
 }
 
-export function PlBreakdown({ revenue, cogs, expenses, payroll }: Props) {
+export function PlBreakdown({ grossSales, commission, revenue, cogs, expenses, payroll }: Props) {
   const grossProfit       = revenue - cogs;
   const totalExpenses     = expenses.reduce((s, e) => s + e.amount, 0);
   const totalOpex         = totalExpenses + payroll;
@@ -37,11 +39,15 @@ export function PlBreakdown({ revenue, cogs, expenses, payroll }: Props) {
       <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Revenue</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Gross Sales</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">{fmt(revenue)}</p>
-            <p className="text-xs text-muted-foreground mt-1">Net sales after commission</p>
+            <p className="text-2xl font-bold tabular-nums">{fmt(grossSales)}</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {commission > 0
+                ? `− ${fmt(commission)} commission → Factory ${fmt(revenue)}`
+                : "No commission this period"}
+            </p>
           </CardContent>
         </Card>
         <Card>
@@ -53,7 +59,7 @@ export function PlBreakdown({ revenue, cogs, expenses, payroll }: Props) {
               {fmt(grossProfit)}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              Revenue minus cost of goods · {grossMarginPct.toFixed(1)}% margin
+              Factory revenue minus COGS · {grossMarginPct.toFixed(1)}% margin
             </p>
           </CardContent>
         </Card>
@@ -92,18 +98,30 @@ export function PlBreakdown({ revenue, cogs, expenses, payroll }: Props) {
             <CardTitle className="text-base">Income Statement</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
+            {/* Revenue section */}
             <div className="flex justify-between font-medium">
-              <span>Revenue</span>
-              <span className="text-green-700">{fmt(revenue)}</span>
+              <span>Gross Sales</span>
+              <span className="tabular-nums text-green-700">{fmt(grossSales)}</span>
             </div>
             <div className="flex justify-between text-muted-foreground">
-              <span>Cost of Goods Sold (COGS)</span>
-              <span className="text-destructive">({fmt(cogs)})</span>
+              <span className="pl-2">— Sales Commission</span>
+              <span className="tabular-nums text-destructive">({fmt(commission)})</span>
+            </div>
+            <Separator />
+            <div className="flex justify-between font-medium">
+              <span>Factory Revenue / Net Sales</span>
+              <span className="tabular-nums text-green-700">{fmt(revenue)}</span>
+            </div>
+
+            {/* COGS */}
+            <div className="flex justify-between text-muted-foreground">
+              <span className="pl-2">— Cost of Goods Sold (COGS)</span>
+              <span className="tabular-nums text-destructive">({fmt(cogs)})</span>
             </div>
             <Separator />
             <div className="flex justify-between font-semibold">
               <span>Gross Profit</span>
-              <span className={grossProfit >= 0 ? "text-green-600" : "text-destructive"}>
+              <span className={`tabular-nums ${grossProfit >= 0 ? "text-green-600" : "text-destructive"}`}>
                 {fmt(grossProfit)}
               </span>
             </div>

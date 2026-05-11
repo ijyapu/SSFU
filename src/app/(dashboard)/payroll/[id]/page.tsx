@@ -48,34 +48,57 @@ export default async function PayrollRunPage({
 
   if (!run) notFound();
 
+  // Fetch all SalaryWithdrawals for every employee in this run (any date — unapplied may be old)
+  const employeeIds = run.items.map((i) => i.employee.id);
+  const allWithdrawals = await prisma.salaryWithdrawal.findMany({
+    where: { employeeId: { in: employeeIds } },
+    include: {
+      appliedDeduction: { select: { id: true, payrollItemId: true } },
+    },
+    orderBy: { takenAt: "asc" },
+  });
+
   const serialised = {
     id:     run.id,
     month:  run.month,
     year:   run.year,
     status: run.status,
     notes:  run.notes,
-    items:  run.items.map((item) => ({
-      id:           item.id,
-      employeeNo:   item.employee.employeeNo,
-      employeeName: `${item.employee.firstName} ${item.employee.lastName}`,
-      department:   item.employee.department.name,
-      position:     item.employee.position,
-      basicSalary:  Number(item.basicSalary),
-      carryoverIn:  Number(item.carryoverIn),
-      totalPaid:    Number(item.deductions),
-      remaining:    Number(item.netPay),
-      notes:        item.notes,
-      deductionEntries: item.deductionEntries.map((d) => ({
-        id:          d.id,
-        amount:      Number(d.amount),
-        givenBy:     d.givenBy,
-        givenAt:     d.givenAt?.toISOString() ?? null,
-        paymentMode: d.paymentMode,
-        notes:       d.notes,
-        photoUrl:    d.photoUrl,
-        createdAt:   d.createdAt.toISOString(),
-      })),
-    })),
+    items:  run.items.map((item) => {
+      const empWithdrawals = allWithdrawals.filter((w) => w.employeeId === item.employee.id);
+      return {
+        id:           item.id,
+        employeeNo:   item.employee.employeeNo,
+        employeeName: `${item.employee.firstName} ${item.employee.lastName}`,
+        department:   item.employee.department.name,
+        position:     item.employee.position,
+        basicSalary:  Number(item.basicSalary),
+        carryoverIn:  Number(item.carryoverIn),
+        totalPaid:    Number(item.deductions),
+        remaining:    Number(item.netPay),
+        notes:        item.notes,
+        deductionEntries: item.deductionEntries.map((d) => ({
+          id:           d.id,
+          amount:       Number(d.amount),
+          givenBy:      d.givenBy,
+          givenAt:      d.givenAt?.toISOString() ?? null,
+          paymentMode:  d.paymentMode,
+          notes:        d.notes,
+          photoUrl:     d.photoUrl,
+          createdAt:    d.createdAt.toISOString(),
+          withdrawalId: d.withdrawalId ?? null,
+        })),
+        withdrawals: empWithdrawals.map((w) => ({
+          id:                w.id,
+          amount:            Number(w.amount),
+          takenAt:           w.takenAt.toISOString(),
+          notes:             w.notes,
+          paymentMode:       w.paymentMode,
+          isAppliedHere:     w.appliedDeduction?.payrollItemId === item.id,
+          isAppliedElsewhere: w.appliedDeduction !== null && w.appliedDeduction.payrollItemId !== item.id,
+        })),
+      };
+    }),
   };
 
   return (

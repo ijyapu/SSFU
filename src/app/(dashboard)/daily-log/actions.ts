@@ -961,6 +961,214 @@ export async function reopenDailyLog(logId: string): Promise<void> {
 }
 
 // ─────────────────────────────────────────────
+// REPAIR CLOSED LOG (admin only)
+// ─────────────────────────────────────────────
+
+export type RepairResult = {
+  repairedCount: number; // number of items whose closingQty changed
+};
+
+/**
+ * Recomputes soldQty, freshReturnQty, and closingQty from live source records
+ * for a CLOSED or AUTO_ADJUSTED log, without touching any StockMovements.
+ * Manual fields (producedQty, usedQty, wasteQty, damagedQty, notes, openingQty) are preserved.
+ * Marks the log AUTO_ADJUSTED and propagates the corrected closing to the next OPEN/REOPENED log.
+ */
+export async function repairDailyLog(logId: string): Promise<RepairResult> {
+  const { userId, role } = await requireDailyLogAccess();
+  if (role !== "admin" && role !== "superadmin") {
+    throw new Error("Only admins can repair a closed log");
+  }
+
+  const log = await prisma.dailyLog.findUnique({
+    where: { id: logId },
+    include: { items: true },
+  });
+  if (!log) throw new Error("Log not found");
+  if (log.status !== "CLOSED" && log.status !== "AUTO_ADJUSTED") {
+    throw new Error("Only CLOSED or AUTO_ADJUSTED logs can be repaired");
+  }
+
+  const logDate   = log.logDate;
+  const nextDay   = new Date(logDate.getTime() + 24 * 60 * 60 * 1000);
+  const dateLabel = logDate.toISOString().slice(0, 10);
+  const productIds = log.items.map((i) => i.productId);
+
+  // Re-query all live source data (same sources as getDailyLog / closeDailyLog)
+  const [soldSums, freshReturnSums, purchaseSums, adjMovements] = await Promise.all([
+    prisma.salesOrderItem.groupBy({
+      by: ["productId"],
+      where: {
+        salesOrder: {
+          status:    { in: ["CONFIRMED", "PARTIALLY_PAID", "PAID"] },
+          deletedAt: null,
+          orderDate: { gte: logDate, lt: nextDay },
+        },
+      },
+      _sum: { quantity: true },
+    }),
+    prisma.salesReturnItem.groupBy({
+      by: ["productId"],
+      where: {
+        salesReturn: {
+          returnType: "FRESH",
+          salesOrder: { deletedAt: null, orderDate: { gte: logDate, lt: nextDay } },
+        },
+      },
+      _sum: { quantity: true },
+    }),
+    prisma.purchaseLineItem.groupBy({
+      by: ["productId"],
+      where: {
+        productId: { not: null },
+        purchase:  { deletedAt: null, date: { gte: logDate, lt: nextDay } },
+      },
+      _sum: { quantity: true },
+    }),
+    prisma.stockMovement.findMany({
+      where: {
+        productId:     { in: productIds },
+        type:          { in: [StockMovementType.ADJUSTMENT_IN, StockMovementType.ADJUSTMENT_OUT] },
+        referenceType: null,
+        createdAt:     { gte: logDate, lt: nextDay },
+      },
+      select: { productId: true, type: true, quantity: true },
+    }),
+  ]);
+
+  const soldMap    = new Map(soldSums.map((s) => [s.productId, Number(s._sum.quantity ?? 0)]));
+  const freshMap   = new Map(freshReturnSums.map((s) => [s.productId, Number(s._sum.quantity ?? 0)]));
+  const purchaseMap = new Map(
+    purchaseSums
+      .filter((s) => s.productId != null)
+      .map((s) => [s.productId!, Number(s._sum.quantity ?? 0)])
+  );
+  const adjInMap  = new Map<string, number>();
+  const adjOutMap = new Map<string, number>();
+  for (const mv of adjMovements) {
+    const qty = Number(mv.quantity);
+    if (mv.type === StockMovementType.ADJUSTMENT_IN) {
+      adjInMap.set(mv.productId,  (adjInMap.get(mv.productId)  ?? 0) + qty);
+    } else {
+      adjOutMap.set(mv.productId, (adjOutMap.get(mv.productId) ?? 0) + qty);
+    }
+  }
+
+  // Compute corrected values per item
+  type ItemPatch = {
+    id:           string;
+    productId:    string;
+    soldQty:      number;
+    freshReturnQty: number;
+    closingQty:   number;
+    oldClosingQty: number;
+    changed:      boolean;
+  };
+
+  const patches: ItemPatch[] = log.items.map((item) => {
+    const opening    = Number(item.openingQty);
+    const produced   = Number(item.producedQty);
+    const used       = Number(item.usedQty);
+    const waste      = Number(item.wasteQty);
+    const damaged    = Number(item.damagedQty);
+    const oldClosing = Number(item.closingQty);
+
+    // Mirror closeDailyLog: prefer stored value if manually set higher than live
+    const liveSold   = soldMap.get(item.productId) ?? 0;
+    const sold       = Number(item.soldQty) > liveSold ? Number(item.soldQty) : liveSold;
+    const liveFresh  = freshMap.get(item.productId) ?? 0;
+    const freshReturn = Number(item.freshReturnQty) > liveFresh ? Number(item.freshReturnQty) : liveFresh;
+
+    const purchased  = purchaseMap.get(item.productId) ?? 0;
+    const adjustIn   = adjInMap.get(item.productId)  ?? 0;
+    const adjustOut  = adjOutMap.get(item.productId) ?? 0;
+
+    const newClosing = opening + purchased + produced + freshReturn + adjustIn
+                     - used - sold - waste - damaged - adjustOut;
+
+    const changed =
+      Math.abs(newClosing - oldClosing)          > 0.0005 ||
+      Math.abs(sold - Number(item.soldQty))      > 0.0005 ||
+      Math.abs(freshReturn - Number(item.freshReturnQty)) > 0.0005;
+
+    return {
+      id:           item.id,
+      productId:    item.productId,
+      soldQty:      sold,
+      freshReturnQty: freshReturn,
+      closingQty:   newClosing,
+      oldClosingQty: oldClosing,
+      changed,
+    };
+  });
+
+  // Persist: update all items + stamp the log as AUTO_ADJUSTED in one transaction
+  await prisma.$transaction([
+    ...patches.map((p) =>
+      prisma.dailyLogItem.update({
+        where: { id: p.id },
+        data: {
+          soldQty:        p.soldQty,
+          freshReturnQty: p.freshReturnQty,
+          closingQty:     p.closingQty,
+        },
+      })
+    ),
+    prisma.dailyLog.update({
+      where: { id: logId },
+      data: {
+        status:         "AUTO_ADJUSTED",
+        autoAdjustedAt: new Date(),
+        autoAdjustedBy: userId,
+      },
+    }),
+  ]);
+
+  // Propagate corrected closing to the immediate next OPEN/REOPENED log (one step only)
+  const immediateNextLog = await prisma.dailyLog.findFirst({
+    where:   { logDate: { gt: logDate } },
+    orderBy: { logDate: "asc" },
+    select:  { id: true, status: true },
+  });
+  if (immediateNextLog && (immediateNextLog.status === "OPEN" || immediateNextLog.status === "REOPENED")) {
+    await prisma.$transaction(
+      patches.map((p) =>
+        prisma.dailyLogItem.updateMany({
+          where: { dailyLogId: immediateNextLog.id, productId: p.productId },
+          data:  { openingQty: p.closingQty },
+        })
+      )
+    );
+  }
+
+  const changedPatches = patches.filter((p) => p.changed);
+
+  await writeAuditLog({
+    userId,
+    action:     "DAILY_LOG_REPAIR",
+    entityType: "DailyLog",
+    entityId:   logId,
+    after: {
+      date:            dateLabel,
+      repairedBy:      userId,
+      changedCount:    changedPatches.length,
+      changedProducts: changedPatches.map((p) => ({
+        productId:    p.productId,
+        oldClosingQty: p.oldClosingQty,
+        newClosingQty: p.closingQty,
+      })),
+    },
+  });
+
+  revalidatePath("/daily-log");
+  revalidatePath("/daily-log/history");
+  revalidatePath("/inventory");
+  revalidatePath("/inventory/stock-levels");
+
+  return { repairedCount: changedPatches.length };
+}
+
+// ─────────────────────────────────────────────
 // HISTORY LIST
 // ─────────────────────────────────────────────
 

@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { z } from "zod/v4";
 import { format } from "date-fns";
 import { DateDisplay } from "@/components/ui/date-display";
-import { Trash2, Plus, Banknote, Wifi, ImageIcon } from "lucide-react";
+import { Trash2, Plus, Banknote, Wifi, ImageIcon, Loader2, CheckCircle2, Clock } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
@@ -25,7 +25,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { addPayrollDeduction, deletePayrollDeduction } from "../../../employees/actions";
+import { addPayrollDeduction, deletePayrollDeduction, applyWithdrawalToPayroll } from "../../../employees/actions";
 
 const deductionSchema = z.object({
   amount:      z.number({ error: "Amount is required" }).positive("Must be greater than 0"),
@@ -46,6 +46,17 @@ type DeductionEntry = {
   notes: string | null;
   photoUrl: string | null;
   createdAt: string;
+  withdrawalId: string | null;
+};
+
+type WithdrawalEntry = {
+  id: string;
+  amount: number;
+  takenAt: string;
+  notes: string | null;
+  paymentMode: string;
+  isAppliedHere: boolean;
+  isAppliedElsewhere: boolean;
 };
 
 type Props = {
@@ -57,18 +68,27 @@ type Props = {
   carryoverIn: number;
   deductionEntries: DeductionEntry[];
   currentRemaining: number;
+  withdrawals: WithdrawalEntry[];
+  isFinalized: boolean;
 };
 
 export function DeductionDialog({
-  open, onClose, payrollItemId, employeeName, basicSalary, carryoverIn, deductionEntries, currentRemaining,
+  open, onClose, payrollItemId, employeeName, basicSalary, carryoverIn,
+  deductionEntries, currentRemaining, withdrawals: initialWithdrawals, isFinalized,
 }: Props) {
-  const [photoUrl, setPhotoUrl]     = useState<string | null>(null);
-  const [showForm, setShowForm]     = useState(deductionEntries.length === 0);
-  const [entries, setEntries]       = useState<DeductionEntry[]>(deductionEntries);
-  const [remaining, setRemaining]   = useState(currentRemaining);
-  const [deleting, setDeleting]     = useState<string | null>(null);
+  const [photoUrl, setPhotoUrl]       = useState<string | null>(null);
+  const [showForm, setShowForm]       = useState(deductionEntries.length === 0);
+  const [entries, setEntries]         = useState<DeductionEntry[]>(deductionEntries);
+  const [remaining, setRemaining]     = useState(currentRemaining);
+  const [deleting, setDeleting]       = useState<string | null>(null);
+  const [withdrawals, setWithdrawals] = useState<WithdrawalEntry[]>(initialWithdrawals);
+  const [applying, setApplying]       = useState<string | null>(null);
 
   const totalDeductions = entries.reduce((s, e) => s + e.amount, 0);
+  const unappliedWithdrawals = withdrawals.filter((w) => !w.isAppliedHere && !w.isAppliedElsewhere);
+
+  const fmtRs = (n: number) =>
+    `Rs ${n.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
 
   const form = useForm<FormValues>({
     resolver: zodResolver(deductionSchema),
@@ -89,17 +109,18 @@ export function DeductionDialog({
       });
 
       const newEntry: DeductionEntry = {
-        id:          crypto.randomUUID(),
-        amount:      values.amount,
-        givenBy:     values.givenBy || null,
-        givenAt:     values.givenAt,
-        paymentMode: values.paymentMode,
-        notes:       values.notes || null,
-        photoUrl:    photoUrl,
-        createdAt:   new Date().toISOString(),
+        id:           crypto.randomUUID(),
+        amount:       values.amount,
+        givenBy:      values.givenBy || null,
+        givenAt:      values.givenAt,
+        paymentMode:  values.paymentMode,
+        notes:        values.notes || null,
+        photoUrl:     photoUrl,
+        createdAt:    new Date().toISOString(),
+        withdrawalId: null,
       };
-      setEntries((prev: DeductionEntry[]) => [...prev, newEntry]);
-      setRemaining((prev: number) => prev - values.amount);
+      setEntries((prev) => [...prev, newEntry]);
+      setRemaining((prev) => prev - values.amount);
 
       toast.success("Payment deduction recorded");
       form.reset({ amount: undefined, givenBy: "", givenAt: format(new Date(), "yyyy-MM-dd"), paymentMode: "CASH", notes: "" });
@@ -114,13 +135,46 @@ export function DeductionDialog({
     setDeleting(entry.id);
     try {
       await deletePayrollDeduction(entry.id, payrollItemId);
-      setEntries((prev: DeductionEntry[]) => prev.filter((e) => e.id !== entry.id));
-      setRemaining((prev: number) => prev + entry.amount);
+      setEntries((prev) => prev.filter((e) => e.id !== entry.id));
+      setRemaining((prev) => prev + entry.amount);
+      if (entry.withdrawalId) {
+        setWithdrawals((prev) =>
+          prev.map((w) => w.id === entry.withdrawalId ? { ...w, isAppliedHere: false } : w)
+        );
+      }
       toast.success("Deduction removed");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to remove deduction");
     } finally {
       setDeleting(null);
+    }
+  }
+
+  async function handleApply(withdrawal: WithdrawalEntry) {
+    setApplying(withdrawal.id);
+    try {
+      await applyWithdrawalToPayroll(withdrawal.id, payrollItemId);
+      setWithdrawals((prev) =>
+        prev.map((w) => w.id === withdrawal.id ? { ...w, isAppliedHere: true } : w)
+      );
+      const newEntry: DeductionEntry = {
+        id:           crypto.randomUUID(),
+        amount:       withdrawal.amount,
+        givenBy:      null,
+        givenAt:      withdrawal.takenAt.slice(0, 10),
+        paymentMode:  withdrawal.paymentMode,
+        notes:        withdrawal.notes ?? `Advance applied (taken ${withdrawal.takenAt.slice(0, 10)})`,
+        photoUrl:     null,
+        createdAt:    new Date().toISOString(),
+        withdrawalId: withdrawal.id,
+      };
+      setEntries((prev) => [...prev, newEntry]);
+      setRemaining((prev) => prev - withdrawal.amount);
+      toast.success("Salary advance applied to payroll");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to apply advance");
+    } finally {
+      setApplying(null);
     }
   }
 
@@ -131,34 +185,92 @@ export function DeductionDialog({
           <DialogTitle>Salary Deductions — {employeeName}</DialogTitle>
           <div className="flex flex-wrap items-center gap-3 text-sm mt-1">
             <span className="text-muted-foreground">
-              Salary: <span className="font-medium text-foreground">Rs {basicSalary.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+              Salary: <span className="font-medium text-foreground">{fmtRs(basicSalary)}</span>
             </span>
             {carryoverIn > 0 && (
               <span className="text-blue-600">
-                + Rs {carryoverIn.toLocaleString(undefined, { minimumFractionDigits: 2 })} carried over
+                + {fmtRs(carryoverIn)} carried over
               </span>
             )}
             {totalDeductions > 0 && (
               <span className="text-emerald-600">
-                Paid: Rs {totalDeductions.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                Paid: {fmtRs(totalDeductions)}
               </span>
             )}
             <span className="font-semibold">
-              Remaining: Rs {remaining.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              Remaining: {fmtRs(remaining)}
             </span>
           </div>
         </DialogHeader>
+
+        {/* Salary advances section */}
+        {withdrawals.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-muted-foreground">
+              Salary Advances ({withdrawals.length})
+            </p>
+            <div className="rounded-lg border divide-y">
+              {withdrawals.map((w) => (
+                <div key={w.id} className="flex items-start gap-3 p-3">
+                  <Clock className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                  <div className="flex-1 min-w-0 space-y-0.5">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-semibold text-sm">{fmtRs(w.amount)}</span>
+                      <Badge variant="secondary" className="text-xs">
+                        {w.paymentMode === "CASH" ? "Cash" : "Online"}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">
+                        <DateDisplay date={w.takenAt} />
+                      </span>
+                      {w.isAppliedHere && (
+                        <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 text-xs gap-1">
+                          <CheckCircle2 className="h-3 w-3" />
+                          Applied
+                        </Badge>
+                      )}
+                      {w.isAppliedElsewhere && (
+                        <span className="text-xs text-muted-foreground italic">Applied elsewhere</span>
+                      )}
+                    </div>
+                    {w.notes && (
+                      <p className="text-xs text-muted-foreground">{w.notes}</p>
+                    )}
+                  </div>
+                  {!w.isAppliedHere && !w.isAppliedElsewhere && !isFinalized && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs shrink-0"
+                      disabled={applying === w.id}
+                      onClick={() => handleApply(w)}
+                    >
+                      {applying === w.id ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        "Apply to Payroll"
+                      )}
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+            {unappliedWithdrawals.length > 0 && !isFinalized && (
+              <p className="text-xs text-amber-600">
+                {unappliedWithdrawals.length} advance{unappliedWithdrawals.length !== 1 ? "s" : ""} not yet applied to this payroll run.
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Existing deduction entries */}
         {entries.length > 0 && (
           <div className="space-y-2">
             <p className="text-sm font-medium text-muted-foreground">
-              Payments given ({entries.length})
+              Payments recorded ({entries.length})
             </p>
             <div className="rounded-lg border divide-y">
               {entries.map((entry) => (
                 <div key={entry.id} className="flex items-start gap-3 p-3">
-                  {/* Mode icon */}
                   <div className="mt-0.5 shrink-0">
                     {entry.paymentMode === "CASH" ? (
                       <Banknote className="h-4 w-4 text-muted-foreground" />
@@ -167,15 +279,14 @@ export function DeductionDialog({
                     )}
                   </div>
 
-                  {/* Details */}
                   <div className="flex-1 min-w-0 space-y-0.5">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-semibold text-sm">
-                        Rs {entry.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                      </span>
-                      <Badge variant="secondary" className="text-xs">
-                        {entry.paymentMode === "CASH" ? "Cash" : "Online"}
-                      </Badge>
+                      <span className="font-semibold text-sm">{fmtRs(entry.amount)}</span>
+                      {entry.withdrawalId ? (
+                        <Badge variant="secondary" className="text-xs">Applied Advance</Badge>
+                      ) : (
+                        <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 text-xs">Payroll Payment</Badge>
+                      )}
                       <span className="text-xs text-muted-foreground">
                         <DateDisplay date={entry.givenAt ?? entry.createdAt} />
                       </span>
@@ -199,7 +310,6 @@ export function DeductionDialog({
                     )}
                   </div>
 
-                  {/* Delete */}
                   <AlertDialog>
                     <AlertDialogTrigger
                       render={
@@ -217,7 +327,9 @@ export function DeductionDialog({
                       <AlertDialogHeader>
                         <AlertDialogTitle>Remove this deduction?</AlertDialogTitle>
                         <AlertDialogDescription>
-                          Rs {entry.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })} will be added back to the net pay.
+                          {entry.withdrawalId
+                            ? `This will un-apply the salary advance of ${fmtRs(entry.amount)}. The advance will become available to apply again.`
+                            : `${fmtRs(entry.amount)} will be added back to the net pay.`}
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
@@ -237,13 +349,12 @@ export function DeductionDialog({
         {/* Add new deduction form */}
         {showForm ? (
           <>
-            {entries.length > 0 && <Separator />}
+            {(entries.length > 0 || withdrawals.length > 0) && <Separator />}
             <p className="text-sm font-medium">Record a payment</p>
 
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
 
-                {/* Amount + Date */}
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
@@ -280,7 +391,6 @@ export function DeductionDialog({
                   />
                 </div>
 
-                {/* Given by */}
                 <FormField
                   control={form.control}
                   name="givenBy"
@@ -295,7 +405,6 @@ export function DeductionDialog({
                   )}
                 />
 
-                {/* Payment mode */}
                 <FormField
                   control={form.control}
                   name="paymentMode"
@@ -327,7 +436,6 @@ export function DeductionDialog({
                   )}
                 />
 
-                {/* Notes */}
                 <FormField
                   control={form.control}
                   name="notes"
@@ -342,7 +450,6 @@ export function DeductionDialog({
                   )}
                 />
 
-                {/* Photo */}
                 <PhotoUpload
                   value={photoUrl}
                   onChange={setPhotoUrl}
@@ -350,7 +457,7 @@ export function DeductionDialog({
                 />
 
                 <div className="flex gap-2 pt-1">
-                  {entries.length > 0 && (
+                  {(entries.length > 0 || withdrawals.length > 0) && (
                     <Button
                       type="button"
                       variant="outline"

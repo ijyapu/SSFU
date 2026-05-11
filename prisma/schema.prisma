@@ -611,9 +611,10 @@ model SalaryWithdrawal {
   notes       String?
   photoUrl    String?  // proof of payment photo
 
-  employee   Employee @relation(fields: [employeeId], references: [id])
-  recordedBy String   // Clerk userId
-  createdAt  DateTime @default(now())
+  employee         Employee          @relation(fields: [employeeId], references: [id])
+  appliedDeduction PayrollDeduction? // null until applied to a payroll run
+  recordedBy       String            // Clerk userId
+  createdAt        DateTime          @default(now())
 
   @@index([employeeId])
   @@index([takenAt])
@@ -668,7 +669,12 @@ model PayrollDeduction {
   recordedBy    String   // Clerk userId
   createdAt     DateTime @default(now())
 
-  payrollItem PayrollItem @relation(fields: [payrollItemId], references: [id], onDelete: Cascade)
+  // When set, this deduction applies a prior SalaryWithdrawal — the cash already
+  // left the business on the withdrawal date. NOT a new cash outflow in Cash Flow.
+  withdrawalId  String?  @unique
+
+  payrollItem PayrollItem       @relation(fields: [payrollItemId], references: [id], onDelete: Cascade)
+  withdrawal  SalaryWithdrawal? @relation(fields: [withdrawalId], references: [id])
 
   @@index([payrollItemId])
 }

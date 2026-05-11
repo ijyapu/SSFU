@@ -153,8 +153,10 @@ export async function getCashFlow(from: string, to: string): Promise<CashFlowDat
       orderBy: { date: "asc" },
     }),
 
+    // Only count fresh payroll payments — NOT applied-withdrawal deductions
+    // (those were already counted as cash outflow when the SalaryWithdrawal was recorded).
     prisma.payrollDeduction.findMany({
-      where: { givenAt: { lte: cutoff } },
+      where: { givenAt: { lte: cutoff }, withdrawalId: null },
       include: {
         payrollItem: {
           include: { employee: { select: { firstName: true, lastName: true } } },
@@ -316,7 +318,7 @@ export async function getCashFlow(from: string, to: string): Promise<CashFlowDat
     allEntries.push({
       id: d.id,
       timestamp: d.givenAt,
-      category: "Payroll",
+      category: "Payroll Payment",
       subcategory: `${emp.firstName} ${emp.lastName}`,
       description: d.notes ?? "Payroll payment",
       amount: Number(d.amount),

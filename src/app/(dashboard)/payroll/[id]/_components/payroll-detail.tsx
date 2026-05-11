@@ -30,6 +30,17 @@ type DeductionEntry = {
   notes: string | null;
   photoUrl: string | null;
   createdAt: string;
+  withdrawalId: string | null;
+};
+
+type WithdrawalEntry = {
+  id: string;
+  amount: number;
+  takenAt: string;
+  notes: string | null;
+  paymentMode: string;
+  isAppliedHere: boolean;
+  isAppliedElsewhere: boolean;
 };
 
 type PayrollItem = {
@@ -44,6 +55,7 @@ type PayrollItem = {
   remaining: number;     // basicSalary + carryoverIn − totalPaid
   notes: string | null;
   deductionEntries: DeductionEntry[];
+  withdrawals: WithdrawalEntry[];
 };
 
 type Props = {
@@ -229,6 +241,14 @@ export function PayrollDetail({ id, month, year, status, notes, items, autoPrint
                             {item.deductionEntries.length} payment{item.deductionEntries.length !== 1 ? "s" : ""}
                           </div>
                         )}
+                        {(() => {
+                          const unapplied = item.withdrawals.filter((w) => !w.isAppliedHere && !w.isAppliedElsewhere).length;
+                          return unapplied > 0 ? (
+                            <div className="text-xs text-amber-600 mt-0.5">
+                              {unapplied} advance{unapplied !== 1 ? "s" : ""} to apply
+                            </div>
+                          ) : null;
+                        })()}
                       </TableCell>
                       <TableCell numeric>
                         {formatNumber(item.basicSalary)}
@@ -366,6 +386,8 @@ export function PayrollDetail({ id, month, year, status, notes, items, autoPrint
           carryoverIn={openItem.carryoverIn}
           deductionEntries={openItem.deductionEntries}
           currentRemaining={openItem.remaining}
+          withdrawals={openItem.withdrawals}
+          isFinalized={finalized}
         />
       )}
     </div>

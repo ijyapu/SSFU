@@ -12,6 +12,7 @@ import { ReopenDialog } from "./_components/reopen-dialog";
 import { StartDayButton } from "./_components/start-day-button";
 import { SyncProductsButton } from "./_components/sync-products-button";
 import { DiscardLogButton } from "./_components/discard-log-button";
+import { RepairLogButton } from "./_components/repair-log-button";
 import { DateNav } from "./_components/date-nav";
 
 export const metadata = { title: "Daily Log" };
@@ -44,7 +45,8 @@ type Props = {
 };
 
 export default async function DailyLogPage({ searchParams }: Props) {
-  await requirePermission("inventory");
+  const role = await requirePermission("inventory");
+  const isAdmin = role === "admin" || role === "superadmin";
 
   const { date: dateParam } = await searchParams;
   const todayStr = getTodayStr();
@@ -62,6 +64,7 @@ export default async function DailyLogPage({ searchParams }: Props) {
   const isToday = validDate === todayStr;
   const isClosed = log?.status === "CLOSED" || log?.status === "AUTO_ADJUSTED";
   const isOpen   = log?.status === "OPEN"   || log?.status === "REOPENED";
+  const hasDelta = isClosed && (log?.items.some((i) => Math.abs(i.formulaDelta) > 0.001) ?? false);
   const prevDay  = shiftDate(validDate, -1);
   const nextDay  = shiftDate(validDate, +1);
 
@@ -134,6 +137,9 @@ export default async function DailyLogPage({ searchParams }: Props) {
           )}
           {isClosed && log && (
             <ReopenDialog logId={log.id} dateLabel={dateLabel} />
+          )}
+          {isAdmin && hasDelta && isClosed && log && (
+            <RepairLogButton logId={log.id} dateLabel={dateLabel} />
           )}
           {log?.status === "OPEN" && (
             <DiscardLogButton logId={log.id} dateLabel={dateLabel} />

@@ -4,12 +4,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const SUB_NAV = [
-  { label: "Company",             href: "/settings/company" },
-  { label: "Users & Roles",       href: "/settings/users" },
-  { label: "Categories",          href: "/settings/categories" },
-  { label: "Units",               href: "/settings/units" },
-  { label: "Expense Categories",  href: "/settings/expense-categories" },
-  { label: "Audit Log",           href: "/settings/audit-log" },
+  { label: "Company",               href: "/settings/company" },
+  { label: "Users & Roles",         href: "/settings/users" },
+  { label: "Categories",            href: "/settings/categories" },
+  { label: "Units",                 href: "/settings/units" },
+  { label: "Expense Categories",    href: "/settings/expense-categories" },
+  { label: "Audit Log",             href: "/settings/audit-log" },
+  { label: "Stock Reconciliation",  href: "/settings/stock-reconciliation" },
 ];
 
 export function SettingsNav() {

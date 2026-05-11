@@ -25,6 +25,7 @@ interface Props {
   page: number;
   pageSize: number;
   productMap?: Record<string, string>;
+  userMap?: Record<string, string>;
 }
 
 const ACTION_COLORS: Record<string, string> = {
@@ -38,6 +39,7 @@ const ACTION_COLORS: Record<string, string> = {
   DAILY_LOG_REOPEN:       "bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300",
   DAILY_LOG_DISCARD:      "bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300",
   DAILY_LOG_AUTO_ADJUST:  "bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300",
+  DAILY_LOG_REPAIR:       "bg-slate-100 text-slate-700 dark:bg-slate-950/50 dark:text-slate-300",
   STOCK_CORRECTION:       "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300",
   PAYMENT_EDIT:           "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300",
   PAYMENT_DELETE:         "bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300",
@@ -59,20 +61,81 @@ function toLabel(key: string): string {
     .trim();
 }
 
-function renderValue(key: string, value: unknown, productMap?: Record<string, string>): string {
+const USER_KEYS = new Set(["createdBy", "closedBy", "autoAdjustedBy", "repairedBy", "userId", "updatedBy"]);
+
+function renderCell(
+  key: string,
+  value: unknown,
+  productMap?: Record<string, string>,
+  userMap?: Record<string, string>,
+): React.ReactNode {
   if (value === null || value === undefined) return "—";
   if (typeof value === "boolean") return value ? "Yes" : "No";
-  if (key === "productId" && typeof value === "string" && productMap?.[value]) {
-    return `${productMap[value]} (${value.slice(0, 8)}…)`;
+
+  // Product ID
+  if (key === "productId" && typeof value === "string") {
+    const name = productMap?.[value];
+    return name ? `${name} (${value.slice(0, 8)}…)` : `${value.slice(0, 8)}… (ID)`;
   }
+
+  // Known user-reference fields → resolve to email
+  if (USER_KEYS.has(key) && typeof value === "string") {
+    const email = userMap?.[value];
+    return email ?? `${value.slice(0, 8)}… (ID)`;
+  }
+
+  // Other long IDs
   if (key.toLowerCase().endsWith("id") && typeof value === "string" && value.length > 12) {
     return `${value.slice(0, 8)}… (ID)`;
   }
+
+  // items array — list of { productId, quantity }
+  if (key === "items" && Array.isArray(value)) {
+    return (
+      <ul className="space-y-0.5">
+        {(value as unknown[]).map((item, i) => {
+          if (!item || typeof item !== "object") return <li key={i}>{String(item)}</li>;
+          const it = item as Record<string, unknown>;
+          const pid  = typeof it.productId === "string" ? it.productId : null;
+          const name = pid ? (productMap?.[pid] ?? `${pid.slice(0, 8)}…`) : null;
+          const qty  = it.quantity ?? it.qty;
+          return (
+            <li key={i}>
+              {qty !== undefined && <span className="font-medium">{String(qty)} ×</span>}{" "}
+              {name ?? JSON.stringify(item)}
+            </li>
+          );
+        })}
+      </ul>
+    );
+  }
+
+  // changedProducts array — list of { productId, oldClosingQty, newClosingQty }
+  if (key === "changedProducts" && Array.isArray(value)) {
+    return (
+      <ul className="space-y-0.5">
+        {(value as unknown[]).map((item, i) => {
+          if (!item || typeof item !== "object") return <li key={i}>{String(item)}</li>;
+          const it   = item as Record<string, unknown>;
+          const pid  = typeof it.productId === "string" ? it.productId : null;
+          const name = pid ? (productMap?.[pid] ?? `${pid.slice(0, 8)}…`) : "?";
+          return (
+            <li key={i}>
+              <span className="font-medium">{name}</span>
+              {": "}
+              {String(it.oldClosingQty ?? "?")} → {String(it.newClosingQty ?? "?")}
+            </li>
+          );
+        })}
+      </ul>
+    );
+  }
+
   if (typeof value === "object") return JSON.stringify(value);
   return String(value);
 }
 
-function SnapshotTable({ data, label, highlight, productMap }: { data: Record<string, unknown>; label: string; highlight?: "red" | "green"; productMap?: Record<string, string> }) {
+function SnapshotTable({ data, label, highlight, productMap, userMap }: { data: Record<string, unknown>; label: string; highlight?: "red" | "green"; productMap?: Record<string, string>; userMap?: Record<string, string> }) {
   const entries = Object.entries(data);
   const headerCls = highlight === "red" ? "text-red-600" : highlight === "green" ? "text-green-600" : "text-muted-foreground";
   return (
@@ -85,7 +148,7 @@ function SnapshotTable({ data, label, highlight, productMap }: { data: Record<st
               <td className="px-2 py-1 font-medium text-muted-foreground bg-muted/40 w-1/3 whitespace-nowrap">
                 {toLabel(k)}
               </td>
-              <td className="px-2 py-1 break-all">{renderValue(k, v, productMap)}</td>
+              <td className="px-2 py-1 break-all">{renderCell(k, v, productMap, userMap)}</td>
             </tr>
           ))}
         </tbody>
@@ -94,7 +157,7 @@ function SnapshotTable({ data, label, highlight, productMap }: { data: Record<st
   );
 }
 
-function DiffViewer({ before, after, productMap }: { before: unknown; after: unknown; productMap?: Record<string, string> }) {
+function DiffViewer({ before, after, productMap, userMap }: { before: unknown; after: unknown; productMap?: Record<string, string>; userMap?: Record<string, string> }) {
   const hasAfter  = after  !== null && after  !== undefined && typeof after  === "object";
   const hasBefore = before !== null && before !== undefined && typeof before === "object";
 
@@ -104,12 +167,12 @@ function DiffViewer({ before, after, productMap }: { before: unknown; after: unk
 
   // CREATE: only after exists
   if (!hasBefore && hasAfter) {
-    return <SnapshotTable data={after as Record<string, unknown>} label="Created with" highlight="green" productMap={productMap} />;
+    return <SnapshotTable data={after as Record<string, unknown>} label="Created with" highlight="green" productMap={productMap} userMap={userMap} />;
   }
 
   // DELETE: only before exists
   if (hasBefore && !hasAfter) {
-    return <SnapshotTable data={before as Record<string, unknown>} label="Deleted record" highlight="red" productMap={productMap} />;
+    return <SnapshotTable data={before as Record<string, unknown>} label="Deleted record" highlight="red" productMap={productMap} userMap={userMap} />;
   }
 
   // UPDATE: show changed fields side by side
@@ -136,8 +199,8 @@ function DiffViewer({ before, after, productMap }: { before: unknown; after: unk
           {displayKeys.map((k) => (
             <tr key={k} className="border-b border-border last:border-0">
               <td className="px-2 py-1 font-medium text-muted-foreground bg-muted/20 whitespace-nowrap">{toLabel(k)}</td>
-              <td className="px-2 py-1 break-all text-red-700">{renderValue(k, b[k], productMap)}</td>
-              <td className="px-2 py-1 break-all text-green-700">{renderValue(k, a[k], productMap)}</td>
+              <td className="px-2 py-1 break-all text-red-700">{renderCell(k, b[k], productMap, userMap)}</td>
+              <td className="px-2 py-1 break-all text-green-700">{renderCell(k, a[k], productMap, userMap)}</td>
             </tr>
           ))}
         </tbody>
@@ -146,7 +209,7 @@ function DiffViewer({ before, after, productMap }: { before: unknown; after: unk
   );
 }
 
-export function AuditLogTable({ entries, total, page, pageSize, productMap }: Props) {
+export function AuditLogTable({ entries, total, page, pageSize, productMap, userMap }: Props) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const { sortKey, sortDir, toggle: sortToggle } = useSortable("createdAt");
 
@@ -240,7 +303,7 @@ export function AuditLogTable({ entries, total, page, pageSize, productMap }: Pr
                       <tr className="border-b border-border bg-muted/10">
                         <td />
                         <td colSpan={4} className="px-4 py-3">
-                          <DiffViewer before={entry.before} after={entry.after} productMap={productMap} />
+                          <DiffViewer before={entry.before} after={entry.after} productMap={productMap} userMap={userMap} />
                         </td>
                       </tr>
                     )}

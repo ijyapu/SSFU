@@ -42,13 +42,22 @@ export default async function AuditLogPage({
     }
   }
 
-  // Collect all productIds referenced in before/after snapshots
+  // Collect all productIds referenced in before/after snapshots (top-level and nested in arrays)
   const productIds = new Set<string>();
   for (const l of logs) {
     for (const snap of [l.before, l.after]) {
-      if (snap && typeof snap === "object" && "productId" in snap) {
-        const pid = (snap as Record<string, unknown>).productId;
-        if (typeof pid === "string") productIds.add(pid);
+      if (!snap || typeof snap !== "object") continue;
+      const s = snap as Record<string, unknown>;
+      if (typeof s.productId === "string") productIds.add(s.productId);
+      for (const arrayKey of ["items", "changedProducts"]) {
+        if (Array.isArray(s[arrayKey])) {
+          for (const item of s[arrayKey] as unknown[]) {
+            if (item && typeof item === "object") {
+              const pid = (item as Record<string, unknown>).productId;
+              if (typeof pid === "string") productIds.add(pid);
+            }
+          }
+        }
       }
     }
   }
@@ -60,6 +69,8 @@ export default async function AuditLogPage({
     });
     for (const p of products) productMap[p.id] = p.name;
   }
+
+  const userRecord: Record<string, string> = Object.fromEntries(userMap);
 
   const entries: AuditEntry[] = logs.map((l) => ({
     id:         l.id,
@@ -80,6 +91,7 @@ export default async function AuditLogPage({
       page={page}
       pageSize={PAGE_SIZE}
       productMap={productMap}
+      userMap={userRecord}
     />
   );
 }

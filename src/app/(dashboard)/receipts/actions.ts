@@ -136,3 +136,51 @@ export async function deleteReceiptPayment(id: string) {
   });
   revalidatePath("/receipts");
 }
+
+// ─── Duplicate guard ───────────────────────────────────────────────────────────
+
+export type SalesmanDuplicateMatch = {
+  id:          string;
+  salesmanName: string;
+  orderNumber: string;
+  amount:      number;
+  paidAt:      string; // ISO string
+};
+
+/**
+ * Returns SalesmanPayment records that share the same amount and fall within
+ * ±1 calendar day of the given date. Used to surface a soft duplicate warning
+ * when recording a Receipt, since both models represent money-in cash events.
+ */
+export async function checkSalesmanPaymentDuplicate(
+  amount: number,
+  dateStr: string,
+): Promise<SalesmanDuplicateMatch[]> {
+  await requireAccess();
+
+  // Build a ±1 day window around noon of the receipt date to avoid timezone edge cases
+  const anchor      = new Date(dateStr + "T12:00:00Z");
+  const windowStart = new Date(anchor.getTime() - 86_400_000);
+  const windowEnd   = new Date(anchor.getTime() + 86_400_000);
+
+  const matches = await prisma.salesmanPayment.findMany({
+    where: {
+      amount: { gte: amount - 0.005, lte: amount + 0.005 },
+      paidAt: { gte: windowStart, lte: windowEnd },
+    },
+    include: {
+      salesman:   { select: { name: true } },
+      salesOrder: { select: { orderNumber: true } },
+    },
+    orderBy: { paidAt: "desc" },
+    take: 5,
+  });
+
+  return matches.map((m) => ({
+    id:           m.id,
+    salesmanName: m.salesman.name,
+    orderNumber:  m.salesOrder.orderNumber,
+    amount:       Number(m.amount),
+    paidAt:       m.paidAt.toISOString(),
+  }));
+}

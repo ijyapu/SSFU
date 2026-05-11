@@ -58,7 +58,8 @@ export default async function EmployeeDetailPage({
   // ── This-month withdrawals for the deductions card ──
   const [withdrawals, payrollItems, allWithdrawals] = await Promise.all([
     prisma.salaryWithdrawal.findMany({
-      where: { employeeId: id, takenAt: { gte: monthStart, lte: monthEnd } },
+      where:   { employeeId: id, takenAt: { gte: monthStart, lte: monthEnd } },
+      include: { appliedDeduction: { select: { id: true } } },
       orderBy: { takenAt: "desc" },
     }),
     prisma.payrollItem.findMany({
@@ -71,6 +72,7 @@ export default async function EmployeeDetailPage({
     }),
     prisma.salaryWithdrawal.findMany({
       where:   { employeeId: id },
+      include: { appliedDeduction: { select: { id: true } } },
       orderBy: { takenAt: "asc" },
     }),
   ]);
@@ -82,6 +84,7 @@ export default async function EmployeeDetailPage({
     filedBy: w.filedBy, givenBy: w.givenBy,
     paymentMode: w.paymentMode as "CASH" | "ONLINE",
     notes: w.notes, photoUrl: w.photoUrl,
+    isApplied: !!w.appliedDeduction,
   }));
 
   // Build prev/next month links
@@ -130,6 +133,8 @@ export default async function EmployeeDetailPage({
       debit: 0,
     });
     for (const ded of item.deductionEntries) {
+      // Skip applied-advance deductions — already debited when the SalaryWithdrawal was recorded
+      if (ded.withdrawalId) continue;
       raw.push({
         date: ded.givenAt,
         sortKey: ded.givenAt.toISOString() + "_2",

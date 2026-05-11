@@ -192,10 +192,72 @@ export async function createWithdrawal(
 
 export async function deleteWithdrawal(id: string, employeeId: string) {
   await requirePayrollAccess();
-  const record = await prisma.salaryWithdrawal.findUnique({ where: { id } });
+  const record = await prisma.salaryWithdrawal.findUnique({
+    where: { id },
+    include: { appliedDeduction: { select: { id: true } } },
+  });
   if (!record || record.employeeId !== employeeId) throw new Error("Not found");
+  if (record.appliedDeduction) {
+    throw new Error("This advance has been applied to a payroll run. Remove the payroll entry first.");
+  }
   await prisma.salaryWithdrawal.delete({ where: { id } });
   revalidatePath(`/employees/${employeeId}`);
+}
+
+export async function applyWithdrawalToPayroll(withdrawalId: string, payrollItemId: string) {
+  const userId = await requirePayrollAccess();
+
+  const withdrawal = await prisma.salaryWithdrawal.findUnique({
+    where: { id: withdrawalId },
+    include: { appliedDeduction: { select: { id: true } } },
+  });
+  if (!withdrawal) throw new Error("Withdrawal not found");
+  if (withdrawal.appliedDeduction) throw new Error("This advance is already applied to a payroll run");
+
+  const item = await prisma.payrollItem.findUnique({
+    where: { id: payrollItemId },
+    select: {
+      basicSalary: true, carryoverIn: true, deductions: true,
+      employeeId: true, payrollRunId: true,
+      payrollRun: { select: { status: true } },
+    },
+  });
+  if (!item) throw new Error("Payroll item not found");
+  if (item.payrollRun.status === "FINALIZED") throw new Error("Cannot modify a finalized payroll run");
+  if (withdrawal.employeeId !== item.employeeId) throw new Error("Withdrawal belongs to a different employee");
+
+  const amount        = Number(withdrawal.amount);
+  const newDeductions = Number(item.deductions) + amount;
+  const totalOwed     = Number(item.basicSalary) + Number(item.carryoverIn);
+  if (newDeductions > totalOwed + 0.005) {
+    throw new Error(`Amount (Rs ${amount.toFixed(2)}) exceeds total owed (Rs ${totalOwed.toFixed(2)})`);
+  }
+  const newNetPay = calcNetPay(Number(item.basicSalary), Number(item.carryoverIn), newDeductions);
+
+  await prisma.$transaction(async (tx) => {
+    await tx.payrollDeduction.create({
+      data: {
+        payrollItemId,
+        withdrawalId,
+        amount:      withdrawal.amount,
+        givenBy:     withdrawal.givenBy,
+        givenAt:     withdrawal.takenAt,
+        paymentMode: withdrawal.paymentMode,
+        notes:       withdrawal.notes ?? `Advance applied (taken ${withdrawal.takenAt.toISOString().slice(0, 10)})`,
+        recordedBy:  userId,
+      },
+    });
+    await tx.payrollItem.update({
+      where: { id: payrollItemId },
+      data: { deductions: newDeductions, netPay: newNetPay },
+    });
+    await tx.payrollRun.update({
+      where: { id: item.payrollRunId },
+      data: { updatedBy: userId },
+    });
+  });
+
+  revalidatePath("/payroll");
 }
 
 // ─── Payroll Runs ─────────────────────────────
