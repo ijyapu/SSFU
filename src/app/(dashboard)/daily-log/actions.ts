@@ -460,6 +460,63 @@ export async function syncMissingProducts(logId: string): Promise<{ added: numbe
 }
 
 // ─────────────────────────────────────────────
+// SYNC OPENING QUANTITIES
+// ─────────────────────────────────────────────
+
+export async function syncOpeningQuantities(logId: string): Promise<{ updatedCount: number }> {
+  await requireDailyLogAccess();
+
+  const log = await prisma.dailyLog.findUnique({
+    where: { id: logId },
+    select: {
+      logDate: true,
+      status:  true,
+      items:   { select: { id: true, productId: true, openingQty: true } },
+    },
+  });
+  if (!log) throw new Error("Log not found");
+  if (log.status !== "OPEN" && log.status !== "REOPENED") {
+    throw new Error("Only open logs can have opening quantities synced");
+  }
+
+  // Find the most recent finalized log before this one
+  const prevLog = await prisma.dailyLog.findFirst({
+    where: {
+      logDate: { lt: log.logDate },
+      status:  { in: ["CLOSED", "AUTO_ADJUSTED"] },
+    },
+    orderBy: { logDate: "desc" },
+    include: { items: { select: { productId: true, closingQty: true } } },
+  });
+
+  if (!prevLog) return { updatedCount: 0 };
+
+  const prevClosingMap = new Map(prevLog.items.map((i) => [i.productId, Number(i.closingQty)]));
+
+  const updates: Array<{ id: string; openingQty: number }> = [];
+  for (const item of log.items) {
+    const prevClosing = prevClosingMap.get(item.productId);
+    if (prevClosing !== undefined && Math.abs(prevClosing - Number(item.openingQty)) > 0.001) {
+      updates.push({ id: item.id, openingQty: prevClosing });
+    }
+  }
+
+  if (updates.length === 0) return { updatedCount: 0 };
+
+  await prisma.$transaction(
+    updates.map((u) =>
+      prisma.dailyLogItem.update({
+        where: { id: u.id },
+        data:  { openingQty: u.openingQty },
+      })
+    )
+  );
+
+  revalidatePath("/daily-log");
+  return { updatedCount: updates.length };
+}
+
+// ─────────────────────────────────────────────
 // UPDATE ITEM (auto-save on blur)
 // ─────────────────────────────────────────────
 

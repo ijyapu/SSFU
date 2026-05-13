@@ -13,6 +13,7 @@ import { StartDayButton } from "./_components/start-day-button";
 import { SyncProductsButton } from "./_components/sync-products-button";
 import { DiscardLogButton } from "./_components/discard-log-button";
 import { RepairLogButton } from "./_components/repair-log-button";
+import { SyncOpeningButton } from "./_components/sync-opening-button";
 import { DateNav } from "./_components/date-nav";
 
 export const metadata = { title: "Daily Log" };
@@ -200,17 +201,20 @@ export default async function DailyLogPage({ searchParams }: Props) {
             </div>
           )}
 
-          {/* Outdated opening — amber warning, no bg box */}
+          {/* Outdated opening — amber box with sync action */}
           {isOpen && log.openingOutdated && (
-            <div className="flex items-start gap-2.5 text-sm text-amber-700">
-              <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
-              <span>
-                <span className="font-semibold">Opening quantities may be outdated.</span>{" "}
-                <span className="text-xs text-amber-600">
-                  The previous day&apos;s closing changed after this log was opened. Affected rows are marked ⚠.
-                  Values update automatically once the previous day is re-closed.
+            <div className="flex items-start justify-between gap-4 rounded-lg border border-amber-200 bg-amber-50/50 px-3 py-2.5">
+              <div className="flex items-start gap-2.5 text-sm text-amber-800">
+                <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0 text-amber-600" />
+                <span>
+                  <span className="font-semibold">Opening quantities may be outdated.</span>{" "}
+                  <span className="text-xs text-amber-700">
+                    The previous day&apos;s closing changed after this log was opened. Affected rows are marked ⚠.
+                    Sync to pull the correct opening quantities before closing.
+                  </span>
                 </span>
-              </span>
+              </div>
+              <SyncOpeningButton logId={log.id} />
             </div>
           )}
 
