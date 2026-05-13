@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import NepaliDate from "nepali-date-converter";
 import {
   ChevronRight,
   ArrowDownLeft, ArrowUpRight,
@@ -18,6 +19,16 @@ function fmtDate(dateStr: string): string {
   return new Date(Date.UTC(y!, m! - 1, d!)).toLocaleDateString("en-US", {
     weekday: "short", day: "numeric", month: "short", year: "numeric", timeZone: "UTC",
   });
+}
+
+function fmtNepaliDate(dateStr: string): string {
+  try {
+    const [y, m, d] = dateStr.split("-").map(Number);
+    const nd = new NepaliDate(new Date(Date.UTC(y!, m! - 1, d!)));
+    return nd.format("D MMMM YYYY");
+  } catch {
+    return "";
+  }
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -90,13 +101,18 @@ function DayRow({ day, isToday }: { day: DayCashFlow; isToday: boolean }) {
         </span>
 
         {/* Date */}
-        <span className="w-52 shrink-0 text-sm font-medium">
-          {fmtDate(day.dateStr)}
-          {isToday && (
-            <span className="ml-2 inline-flex items-center rounded px-1 py-0.5 text-[10px] font-medium bg-primary/10 text-primary leading-none">
-              today
-            </span>
-          )}
+        <span className="w-52 shrink-0">
+          <span className="text-sm font-medium">
+            {fmtDate(day.dateStr)}
+            {isToday && (
+              <span className="ml-2 inline-flex items-center rounded px-1 py-0.5 text-[10px] font-medium bg-primary/10 text-primary leading-none">
+                today
+              </span>
+            )}
+          </span>
+          <span className="block text-xs text-muted-foreground">
+            {fmtNepaliDate(day.dateStr)}
+          </span>
         </span>
 
         {/* Opening balance */}
