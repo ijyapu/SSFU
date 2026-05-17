@@ -192,7 +192,7 @@ export async function getCustomerLedger(
     });
   }
 
-  const typeOrder = { INVOICE: 0, COMMISSION: 1, RETURN: 2, PAYMENT: 3 };
+  const typeOrder = { INVOICE: 0, RETURN: 1, COMMISSION: 2, PAYMENT: 3 };
   rawEntries.sort((a, b) => {
     const diff = a.date.getTime() - b.date.getTime();
     if (diff !== 0) return diff;
