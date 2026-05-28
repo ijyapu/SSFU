@@ -133,7 +133,8 @@ export async function getVendorLedger(
     if (p.date < from) {
       computedOpening += Number(p.totalCost);
       computedOpening -= Number(p.amountPaid);
-      computedOpening -= allocMap.get(p.id) ?? 0;
+      // VendorPaymentAllocation is NOT subtracted here — it is bookkeeping only.
+      // The actual cash outflow is captured by VendorPayment.amount below.
     }
   }
   for (const sp of allSpPayments) {

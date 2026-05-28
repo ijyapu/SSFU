@@ -103,6 +103,7 @@ export async function getCashFlow(from: string, to: string): Promise<CashFlowDat
     purchases,
     purchaseOrders,
     payrollItems,
+    purchaseAllocations,
   ] = await Promise.all([
     prisma.salesmanPayment.findMany({
       where: { salesOrder: { orderDate: { lte: cutoff } } },
@@ -194,6 +195,13 @@ export async function getCashFlow(from: string, to: string): Promise<CashFlowDat
         employee:   { select: { firstName: true, lastName: true } },
         payrollRun: { select: { month: true, year: true } },
       },
+    }),
+
+    // Deferred: VendorPaymentAllocation totals per purchase invoice
+    // Used to show accurate remaining balance on each invoice (totalCost - amountPaid - allocated)
+    prisma.vendorPaymentAllocation.groupBy({
+      by:   ["purchaseId"],
+      _sum: { amount: true },
     }),
   ]);
 
@@ -390,12 +398,19 @@ export async function getCashFlow(from: string, to: string): Promise<CashFlowDat
 
   // ─── Deferred obligations ─────────────────────────────────────────────────
 
+  // Build allocation map: purchaseId → total amount allocated via VendorPaymentAllocations
+  const purchaseAllocMap = new Map<string, number>(
+    purchaseAllocations.map((r) => [r.purchaseId, Number(r._sum.amount ?? 0)])
+  );
+
   const deferred: DeferredItem[] = [];
 
   for (const p of purchases) {
-    const total = Number(p.totalCost);
-    const paid  = Number(p.amountPaid);
-    if (paid < total - 0.005) {
+    const total     = Number(p.totalCost);
+    const paid      = Number(p.amountPaid);                       // always 0 in current workflow
+    const allocated = purchaseAllocMap.get(p.id) ?? 0;           // sum of VendorPaymentAllocations
+    const remaining = total - paid - allocated;
+    if (remaining > 0.005) {
       deferred.push({
         id: p.id,
         type: "purchase_invoice",
@@ -403,8 +418,8 @@ export async function getCashFlow(from: string, to: string): Promise<CashFlowDat
         reference: p.invoiceNo,
         dateLabel: toNepalDate(p.date),
         totalAmount: total,
-        paidAmount: paid,
-        remaining: total - paid,
+        paidAmount:  paid + allocated,
+        remaining,
       });
     }
   }

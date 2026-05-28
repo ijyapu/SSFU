@@ -4,12 +4,12 @@ import { COMPANY } from "@/lib/company";
 // ─── Config & env validation ──────────────────────────────────────────────────
 
 if (!process.env.RESEND_API_KEY)    console.warn("[email] RESEND_API_KEY is not set — all emails will be skipped");
-if (!process.env.ADMIN_EMAIL)       console.warn("[email] ADMIN_EMAIL is not set — using fallback");
-if (!process.env.RESEND_FROM_EMAIL) console.warn("[email] RESEND_FROM_EMAIL is not set — using fallback noreply@ssfi.work");
+if (!process.env.ADMIN_EMAIL)       console.error("[email] ADMIN_EMAIL env var is required — admin alert emails will fail at runtime");
+if (!process.env.RESEND_FROM_EMAIL) console.warn("[email] RESEND_FROM_EMAIL is not set — defaulting to noreply@ssfi.work");
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 const FROM   = `${COMPANY.nameShort} ERP <${process.env.RESEND_FROM_EMAIL ?? "noreply@ssfi.work"}>`;
-const ADMIN  = process.env.ADMIN_EMAIL ?? "shrestha.bikas23@gmail.com";
+const ADMIN  = process.env.ADMIN_EMAIL ?? "";
 const YEAR   = new Date().getFullYear();
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
@@ -133,6 +133,7 @@ export async function sendAdminNewRequestAlert(request: {
   phone?:      string | null;
   reason?:     string | null;
 }) {
+  if (!ADMIN) throw new Error("[email] ADMIN_EMAIL env var is required — cannot send admin alert");
   if (!resend) { logEmail("admin-alert", ADMIN, false, "RESEND_API_KEY not set"); return; }
 
   const adminUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? "https://ssfi.work"}/settings/access-requests`;

@@ -148,10 +148,10 @@ export default function SignInPage() {
           <div className="mt-4 text-center">
             <p className="text-xs text-gray-400">Need access? Contact your administrator</p>
             <a
-              href="mailto:shrestha.bikas23@gmail.com"
+              href={`mailto:${COMPANY.contactEmail}`}
               className="mt-0.5 inline-block text-sm font-medium text-gray-600 hover:text-red-600 transition-colors"
             >
-              shrestha.bikas23@gmail.com
+              {COMPANY.contactEmail}
             </a>
           </div>
 

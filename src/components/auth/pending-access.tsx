@@ -223,8 +223,8 @@ export function PendingAccess({ name = "there", email }: Props) {
                 <ContactRow
                   icon={Mail}
                   label="Email"
-                  value="admin@ssfi.com.np"
-                  href="mailto:admin@ssfi.com.np"
+                  value={COMPANY.contactEmail}
+                  href={`mailto:${COMPANY.contactEmail}`}
                 />
                 <ContactRow
                   icon={User}

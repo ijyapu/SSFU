@@ -102,15 +102,18 @@ export async function getCustomerLedger(
     }
   }
 
+  // Only CONFIRMED, PARTIALLY_PAID, and PAID orders are collectible obligations.
+  // DRAFT is uncommitted; CANCELLED didn't happen; LOST means the obligation was waived.
+  const COLLECTIBLE = new Set<string>(["CONFIRMED", "PARTIALLY_PAID", "PAID"]);
+
   // Opening balance — use factory amount (after commission & pre-period returns) not gross
-  const baseOpening = Number(salesman.openingBalance);
-  let computedOpening = baseOpening;
+  let computedOpening = Number(salesman.openingBalance);
 
   for (const o of allOrders) {
-    if (o.orderDate < from && o.status !== "CANCELLED") {
-      const preReturns   = preFromReturnsMap.get(o.id) ?? 0;
-      const net          = Number(o.totalAmount) - preReturns;
-      const commPct      = Number(o.commissionPct) / 100;
+    if (o.orderDate < from && COLLECTIBLE.has(o.status)) {
+      const preReturns    = preFromReturnsMap.get(o.id) ?? 0;
+      const net           = Number(o.totalAmount) - preReturns;
+      const commPct       = Number(o.commissionPct) / 100;
       const factoryAtFrom = net * (1 - commPct);
       computedOpening += factoryAtFrom - Number(o.amountPaid);
     }
@@ -127,7 +130,7 @@ export async function getCustomerLedger(
 
   for (const o of allOrders) {
     if (o.orderDate < from || o.orderDate > to) continue;
-    if (o.status === "CANCELLED") continue;
+    if (!COLLECTIBLE.has(o.status)) continue;
 
     rawEntries.push({
       id:             `inv-${o.id}`,
@@ -209,7 +212,7 @@ export async function getCustomerLedger(
 
   // Commission summary — uses stored values (updated live by processSalesReturn)
   const periodOrders = allOrders.filter(
-    (o) => o.orderDate >= from && o.orderDate <= to && o.status !== "CANCELLED"
+    (o) => o.orderDate >= from && o.orderDate <= to && COLLECTIBLE.has(o.status)
   );
 
   // Waste per order within the period
