@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { Plus, Trash2, UserPlus, PackagePlus, ChevronDown, AlertTriangle } from "lucide-react";
+import { Plus, Trash2, UserPlus, PackagePlus, AlertTriangle, ChevronsUpDown, Check } from "lucide-react";
 import {
   Form, FormControl, FormField, FormItem, FormLabel, FormMessage,
 } from "@/components/ui/form";
@@ -18,6 +18,10 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
+} from "@/components/ui/command";
 import { PhotoUpload } from "@/components/ui/photo-upload";
 import {
   createPurchaseSchema, newSupplierSchema, newProductSchema,
@@ -25,6 +29,7 @@ import {
 } from "@/lib/validators/purchase";
 import { createPurchase, updatePurchase, createSupplierInline, createProductInline } from "../../actions";
 import { getNextSkuPreview } from "@/app/(dashboard)/inventory/actions";
+import { cn } from "@/lib/utils";
 
 type Supplier  = { id: string; name: string; contactName: string | null; phone: string | null };
 type Product   = { id: string; name: string; sku: string; costPrice: number; unit: string };
@@ -42,117 +47,6 @@ type Props = {
   detailHref?:   string;
 };
 
-// ── Product Combobox ─────────────────────────────────────────────────────────
-function ProductCombobox({
-  value,
-  productId,
-  products,
-  onChange,
-  onProductSelect,
-}: {
-  value: string;
-  productId?: string;
-  products: Product[];
-  onChange: (name: string) => void;
-  onProductSelect: (product: Product) => void;
-}) {
-  const [open, setOpen]     = useState(false);
-  const [query, setQuery]   = useState(value);
-  const wrapRef             = useRef<HTMLDivElement>(null);
-
-  // Keep local query in sync if value is changed externally (e.g. reset)
-  useEffect(() => { setQuery(value); }, [value]);
-
-  const matches = query.trim().length > 0
-    ? products.filter((p) =>
-        p.name.toLowerCase().includes(query.toLowerCase()) ||
-        p.sku.toLowerCase().includes(query.toLowerCase())
-      ).slice(0, 10)
-    : products.slice(0, 10);
-
-  function handleInput(e: React.ChangeEvent<HTMLInputElement>) {
-    const v = e.target.value;
-    setQuery(v);
-    onChange(v);
-    setOpen(true);
-  }
-
-  function handleSelect(p: Product) {
-    setQuery(p.name);
-    onChange(p.name);
-    onProductSelect(p);
-    setOpen(false);
-  }
-
-  // Close on outside click
-  useEffect(() => {
-    function handler(e: MouseEvent) {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
-
-  const linkedProduct = productId ? products.find((p) => p.id === productId) : undefined;
-
-  return (
-    <div ref={wrapRef} className="relative">
-      <div className="flex gap-1 items-center">
-        <div className="relative flex-1">
-          <Input
-            className="h-8 text-sm pr-6"
-            placeholder="Type or select product…"
-            value={query}
-            onChange={handleInput}
-            onFocus={() => setOpen(true)}
-          />
-          <button
-            type="button"
-            tabIndex={-1}
-            className="absolute right-1 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-            onClick={() => setOpen((o) => !o)}
-          >
-            <ChevronDown className="h-3.5 w-3.5" />
-          </button>
-        </div>
-      </div>
-      {linkedProduct && (
-        <p className="text-xs text-muted-foreground pt-0.5">{linkedProduct.unit}</p>
-      )}
-      {open && (
-        <div className="absolute z-50 top-full mt-1 w-full min-w-56 rounded-md border bg-popover shadow-md overflow-hidden">
-          {matches.length === 0 ? (
-            <div className="px-3 py-2 text-sm text-muted-foreground">
-              No product found — use the{" "}
-              <span className="inline-flex items-center gap-0.5 font-medium text-foreground">
-                <PackagePlus className="h-3.5 w-3.5" /> button
-              </span>{" "}
-              next to this field to add it to inventory first.
-            </div>
-          ) : (
-            <ul className="max-h-52 overflow-y-auto">
-              {matches.map((p) => (
-                <li key={p.id}>
-                  <button
-                    type="button"
-                    className="w-full text-left px-3 py-1.5 text-sm hover:bg-accent flex items-center justify-between gap-2"
-                    onMouseDown={(e) => { e.preventDefault(); handleSelect(p); }}
-                  >
-                    <span>{p.name}</span>
-                    <span className="text-xs text-muted-foreground shrink-0">{p.sku}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
 // ── Main Form ────────────────────────────────────────────────────────────────
 export function PurchaseForm({ suppliers: initSuppliers, products: initProducts, categories, units, purchaseId, initialValues, openLogDate, detailHref }: Props) {
   const router = useRouter();
@@ -161,6 +55,7 @@ export function PurchaseForm({ suppliers: initSuppliers, products: initProducts,
   const [supplierOpen, setSupplierOpen] = useState(false);
   const [productOpen,  setProductOpen]  = useState(false);
   const [invoiceUrl, setInvoiceUrl]     = useState<string | null>(initialValues?.invoiceUrl ?? "");
+  const [openCombobox, setOpenCombobox] = useState<Record<number, boolean>>({});
 
   const form = useForm<CreatePurchaseValues>({
     resolver: zodResolver(createPurchaseSchema),
@@ -403,18 +298,61 @@ export function PurchaseForm({ suppliers: initSuppliers, products: initProducts,
                           <FormLabel className="lg:hidden text-xs">Product *</FormLabel>
                           <div className="flex gap-1">
                             <div className="flex-1">
-                              <ProductCombobox
-                                value={f.value}
-                                productId={item?.productId}
-                                products={products}
-                                onChange={(name) => {
-                                  f.onChange(name);
-                                  // Clear linked product if user types manually
-                                  const match = products.find((p) => p.name === name);
-                                  if (!match) form.setValue(`items.${index}.productId`, "");
-                                }}
-                                onProductSelect={(p) => handleProductSelect(index, p)}
-                              />
+                              <Popover
+                                open={!!openCombobox[index]}
+                                onOpenChange={(o) => setOpenCombobox((prev) => ({ ...prev, [index]: o }))}
+                              >
+                                <PopoverTrigger
+                                  nativeButton={false}
+                                  render={
+                                    <div
+                                      role="combobox"
+                                      aria-expanded={!!openCombobox[index]}
+                                      aria-controls={`product-list-${index}`}
+                                      className={cn(
+                                        "flex h-8 w-full cursor-pointer items-center justify-between rounded-md border border-input bg-background px-3 py-1 text-sm hover:bg-accent",
+                                        !item?.productId && "text-muted-foreground"
+                                      )}
+                                    >
+                                      <span className="truncate">
+                                        {item?.productName || "Select product…"}
+                                      </span>
+                                      <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
+                                    </div>
+                                  }
+                                />
+                                <PopoverContent className="w-80 p-0" align="start">
+                                  <Command>
+                                    <CommandInput placeholder="Search by name or SKU…" className="h-9" />
+                                    <CommandList>
+                                      <CommandEmpty>
+                                        No product found. Use the <PackagePlus className="inline h-3.5 w-3.5 mx-0.5" /> button to add one.
+                                      </CommandEmpty>
+                                      <CommandGroup>
+                                        {products.map((p) => (
+                                          <CommandItem
+                                            key={p.id}
+                                            value={`${p.name} ${p.sku}`}
+                                            onSelect={() => {
+                                              f.onChange(p.name);
+                                              handleProductSelect(index, p);
+                                              setOpenCombobox((prev) => ({ ...prev, [index]: false }));
+                                            }}
+                                          >
+                                            <Check className={cn("mr-2 h-3.5 w-3.5 shrink-0", item?.productId === p.id ? "opacity-100" : "opacity-0")} />
+                                            <div className="flex-1 min-w-0">
+                                              <p className="truncate text-sm">{p.name}</p>
+                                              <p className="text-xs text-muted-foreground font-mono">
+                                                {p.sku} · Rs {p.costPrice.toFixed(2)}
+                                              </p>
+                                            </div>
+                                          </CommandItem>
+                                        ))}
+                                      </CommandGroup>
+                                    </CommandList>
+                                  </Command>
+                                </PopoverContent>
+                              </Popover>
                             </div>
                             <Button
                               type="button" variant="ghost" size="icon-sm"
