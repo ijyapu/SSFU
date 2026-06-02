@@ -13,6 +13,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { ProductComboboxField } from "@/components/ui/product-combobox-field";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -510,14 +511,18 @@ export function RecipeEditor({
                     <div className="px-3 py-3 text-sm text-muted-foreground/50 tabular-nums self-center">{idx + 1}</div>
 
                     <div className="px-2 py-2 space-y-1">
-                      <Select
+                      <ProductComboboxField
                         value={line.productId}
-                        onValueChange={(v) => {
-                          if (!v) return;
-                          const selected  = productMap.get(v);
-                          const detected  = selected ? detectCategory(selected.categoryName) : null;
+                        options={availableIngredients.map((p) => ({
+                          id:   p.id,
+                          name: p.name,
+                          meta: `${p.unitName} · Rs ${p.costPrice.toFixed(2)}`,
+                        }))}
+                        onSelect={(id) => {
+                          const selected = productMap.get(id);
+                          const detected = selected ? detectCategory(selected.categoryName) : null;
                           updateIngredient(line.key, {
-                            productId: v,
+                            productId: id,
                             ...(detected !== null ? { costCategory: detected } : {}),
                           });
                           setCategoryNeedsReview((prev) => {
@@ -526,23 +531,11 @@ export function RecipeEditor({
                             return next;
                           });
                         }}
-                      >
-                        <SelectTrigger className={`h-8 w-full text-sm ${errProd ? "border-destructive" : ""}`}>
-                          <SelectValue placeholder="Choose ingredient…">
-                            {ing ? `${ing.name} (${ing.unitName})` : undefined}
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent searchable>
-                          {availableIngredients.map((p) => (
-                            <SelectItem key={p.id} value={p.id}>
-                              {p.name}{" "}
-                              <span className="text-xs text-muted-foreground">
-                                ({p.unitName} · Rs {p.costPrice.toFixed(2)})
-                              </span>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        placeholder="Choose ingredient…"
+                        searchPlaceholder="Search by name…"
+                        error={!!errProd}
+                        triggerHeight="h-8"
+                      />
                       {errProd && (
                         <p className="flex items-center gap-1 text-[11px] text-destructive">
                           <AlertCircle className="h-3 w-3" />{errProd}

@@ -10,9 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
+import { ProductComboboxField } from "@/components/ui/product-combobox-field";
 import { Separator } from "@/components/ui/separator";
 import { processSalesReturn } from "../../actions";
 
@@ -252,28 +250,17 @@ export function ReturnFormInline({
                   </div>
 
                   <div className="px-3 py-2 space-y-1">
-                    <Select
+                    <ProductComboboxField
                       value={line.productId}
-                      onValueChange={(v) => {
-                        if (!v) return;
-                        const p = products.find((pr) => pr.id === v);
-                        updateLine(line.key, { productId: v, unitPrice: p?.sellingPrice ?? "" });
+                      options={products.map((p) => ({ id: p.id, name: p.name, meta: p.unitName }))}
+                      onSelect={(id) => {
+                        const p = products.find((pr) => pr.id === id);
+                        updateLine(line.key, { productId: id, unitPrice: p?.sellingPrice ?? "" });
                       }}
-                    >
-                      <SelectTrigger className={`h-8 w-full text-sm ${errProd ? "border-destructive" : ""}`}>
-                        <SelectValue placeholder="Choose product…">
-                          {products.find((p) => p.id === line.productId)?.name}
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent searchable>
-                        {products.map((p) => (
-                          <SelectItem key={p.id} value={p.id} label={p.name}>
-                            {p.name}{" "}
-                            <span className="text-xs text-muted-foreground">({p.unitName})</span>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      placeholder="Choose product…"
+                      error={!!errProd}
+                      triggerHeight="h-8"
+                    />
                     {errProd && (
                       <p className="flex items-center gap-1 text-[11px] text-destructive">
                         <AlertCircle className="h-3 w-3" />{errProd}

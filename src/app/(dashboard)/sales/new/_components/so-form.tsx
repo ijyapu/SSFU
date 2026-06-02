@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ProductComboboxField } from "@/components/ui/product-combobox-field";
 import { Separator } from "@/components/ui/separator";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
@@ -506,31 +507,16 @@ export function SoForm({ salesmen, products, openLogDate }: Props) {
                     key={line.key}
                     className="grid grid-cols-[2fr_90px_100px_70px_32px] gap-2 px-3 py-2 items-start"
                   >
-                    <Select
+                    <ProductComboboxField
                       value={line.productId}
-                      onValueChange={(v) => {
-                        if (!v) return;
-                        const p = products.find((p) => p.id === v);
-                        updateWasteLine(line.key, {
-                          productId: v,
-                          ...(p ? { unitPrice: p.sellingPrice } : {}),
-                        });
+                      options={products.map((p) => ({ id: p.id, name: p.name, meta: p.unit.name }))}
+                      onSelect={(id) => {
+                        const p = products.find((p) => p.id === id);
+                        updateWasteLine(line.key, { productId: id, ...(p ? { unitPrice: p.sellingPrice } : {}) });
                       }}
-                    >
-                      <SelectTrigger className="h-10 w-full text-sm">
-                        <SelectValue placeholder="Select product">
-                          {products.find((p) => p.id === line.productId)?.name}
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent searchable>
-                        {products.map((p) => (
-                          <SelectItem key={p.id} value={p.id} label={p.name}>
-                            {p.name}
-                            <span className="ml-1 text-xs text-muted-foreground">({p.unit.name})</span>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      placeholder="Select product…"
+                      triggerHeight="h-8"
+                    />
                     <Input
                       type="number"
                       min="0"
@@ -633,28 +619,16 @@ export function SoForm({ salesmen, products, openLogDate }: Props) {
                 const lineTotal = (Number(line.quantity) || 0) * (Number(line.unitPrice) || 0);
                 return (
                   <div key={line.key} className="grid grid-cols-[2fr_90px_100px_70px_32px] gap-2 px-3 py-2 items-start">
-                    <Select
+                    <ProductComboboxField
                       value={line.productId}
-                      onValueChange={(v) => {
-                        if (!v) return;
-                        const p = products.find((p) => p.id === v);
-                        updateFreshLine(line.key, { productId: v, ...(p ? { unitPrice: p.sellingPrice } : {}) });
+                      options={products.map((p) => ({ id: p.id, name: p.name, meta: p.unit.name }))}
+                      onSelect={(id) => {
+                        const p = products.find((p) => p.id === id);
+                        updateFreshLine(line.key, { productId: id, ...(p ? { unitPrice: p.sellingPrice } : {}) });
                       }}
-                    >
-                      <SelectTrigger className="h-10 w-full text-sm">
-                        <SelectValue placeholder="Select product">
-                          {products.find((p) => p.id === line.productId)?.name}
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent searchable>
-                        {products.map((p) => (
-                          <SelectItem key={p.id} value={p.id} label={p.name}>
-                            {p.name}
-                            <span className="ml-1 text-xs text-muted-foreground">({p.unit.name})</span>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      placeholder="Select product…"
+                      triggerHeight="h-8"
+                    />
                     <Input
                       type="number" min="0" step="0.001" placeholder="0"
                       value={line.quantity}

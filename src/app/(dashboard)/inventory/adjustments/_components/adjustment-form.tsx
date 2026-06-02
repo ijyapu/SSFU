@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ProductComboboxField } from "@/components/ui/product-combobox-field";
 import { Badge } from "@/components/ui/badge";
 import { adjustmentSchema, type AdjustmentFormValues } from "@/lib/validators/stock";
 import { ERPSection } from "@/components/ui/erp-section";
@@ -80,23 +81,20 @@ export function AdjustmentForm({ products, isAdmin }: Props) {
             <FormField control={form.control} name="productId" render={({ field }) => (
               <FormItem>
                 <FormLabel>Product</FormLabel>
-                <Select value={field.value} onValueChange={(v) => v && handleProductChange(v)}>
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select a product...">
-                        {products.find(p => p.id === field.value)?.name}
-                      </SelectValue>
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent searchable>
-                    {products.map((p) => (
-                      <SelectItem key={p.id} value={p.id} label={p.name}>
-                        <span className="font-mono text-xs mr-2 text-muted-foreground">{p.sku}</span>
-                        {p.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <FormControl>
+                  <ProductComboboxField
+                    value={field.value}
+                    options={products.map((p) => ({
+                      id:   p.id,
+                      name: p.name,
+                      meta: `${p.sku} · Stock: ${p.currentStock.toLocaleString()} ${p.unit.name}`,
+                    }))}
+                    onSelect={(id) => handleProductChange(id)}
+                    placeholder="Select a product…"
+                    searchPlaceholder="Search by name or SKU…"
+                    triggerHeight="h-10"
+                  />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )} />
