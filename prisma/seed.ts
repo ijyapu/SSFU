@@ -214,7 +214,7 @@ async function main() {
     where: { employeeNo: "EMP-001" }, update: {},
     create: {
       employeeNo: "EMP-001", firstName: "Kwame", lastName: "Asante",
-      email: "kwame.asante@ssfi.com", phone: "+233 24 100 0001",
+      email: "kwame.asante@example.com", phone: "+233 24 100 0001",
       departmentId: deptMap["Management"], position: "General Manager",
       basicSalary: 5000.00, startDate: new Date("2020-01-01"),
     },
@@ -223,7 +223,7 @@ async function main() {
     where: { employeeNo: "EMP-002" }, update: {},
     create: {
       employeeNo: "EMP-002", firstName: "Ama", lastName: "Boateng",
-      email: "ama.boateng@ssfi.com", phone: "+233 24 100 0002",
+      email: "ama.boateng@example.com", phone: "+233 24 100 0002",
       departmentId: deptMap["Finance & Accounting"], position: "Accountant",
       basicSalary: 3200.00, startDate: new Date("2021-03-15"),
     },
@@ -232,7 +232,7 @@ async function main() {
     where: { employeeNo: "EMP-003" }, update: {},
     create: {
       employeeNo: "EMP-003", firstName: "Yaw", lastName: "Darko",
-      email: "yaw.darko@ssfi.com", phone: "+233 24 100 0003",
+      email: "yaw.darko@example.com", phone: "+233 24 100 0003",
       departmentId: deptMap["Sales & Distribution"], position: "Sales Representative",
       basicSalary: 2500.00, startDate: new Date("2022-06-01"),
     },
@@ -241,7 +241,7 @@ async function main() {
     where: { employeeNo: "EMP-004" }, update: {},
     create: {
       employeeNo: "EMP-004", firstName: "Efua", lastName: "Mensah",
-      email: "efua.mensah@ssfi.com", phone: "+233 24 100 0004",
+      email: "efua.mensah@example.com", phone: "+233 24 100 0004",
       departmentId: deptMap["Store & Inventory"], position: "Store Keeper",
       basicSalary: 2200.00, startDate: new Date("2021-09-10"),
     },
@@ -250,7 +250,7 @@ async function main() {
     where: { employeeNo: "EMP-005" }, update: {},
     create: {
       employeeNo: "EMP-005", firstName: "Kofi", lastName: "Owusu",
-      email: "kofi.owusu@ssfi.com", phone: "+233 24 100 0005",
+      email: "kofi.owusu@example.com", phone: "+233 24 100 0005",
       departmentId: deptMap["Production"], position: "Head Baker",
       basicSalary: 3000.00, startDate: new Date("2020-03-01"),
     },
@@ -259,7 +259,7 @@ async function main() {
     where: { employeeNo: "EMP-006" }, update: {},
     create: {
       employeeNo: "EMP-006", firstName: "Akosua", lastName: "Frimpong",
-      email: "akosua.frimpong@ssfi.com", phone: "+233 24 100 0006",
+      email: "akosua.frimpong@example.com", phone: "+233 24 100 0006",
       departmentId: deptMap["Production"], position: "Pastry Chef",
       basicSalary: 2800.00, startDate: new Date("2021-01-05"),
     },
