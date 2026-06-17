@@ -16,7 +16,7 @@ export default function SignUpPage() {
 
         <div className="relative z-10 flex items-center gap-4">
           <div className="relative h-12 w-12 shrink-0">
-            <Image src="/ssfi-logo.jpg" alt="SSFI" fill className="object-contain" priority />
+            <Image src="/ssfu-logo.svg" alt="SSFU" fill className="object-contain" priority />
           </div>
           <div>
             <p className="text-white font-bold text-base tracking-wide">{COMPANY.nameShort} ERP</p>
@@ -27,7 +27,7 @@ export default function SignUpPage() {
         <div className="relative z-10 mt-auto mb-auto space-y-8 pt-16">
           <div className="flex justify-start">
             <div className="h-24 w-24 rounded-full bg-white/5 ring-1 ring-white/10 p-2">
-              <Image src="/ssfi-logo.jpg" alt="SSFI" width={88} height={88} className="object-contain p-1" />
+              <Image src="/ssfu-logo.svg" alt="SSFU" width={88} height={88} className="object-contain p-1" />
             </div>
           </div>
           <div className="space-y-3">
@@ -74,7 +74,7 @@ export default function SignUpPage() {
       <div className="flex flex-1 flex-col items-center justify-center bg-[#fafafa] px-6 py-12">
         <div className="flex lg:hidden items-center gap-3 mb-10">
           <div className="relative h-10 w-10">
-            <Image src="/ssfi-logo.jpg" alt="SSFI" fill className="object-contain" />
+            <Image src="/ssfu-logo.svg" alt="SSFU" fill className="object-contain" />
           </div>
           <div>
             <p className="font-bold text-gray-900 text-sm">{COMPANY.nameShort} ERP</p>

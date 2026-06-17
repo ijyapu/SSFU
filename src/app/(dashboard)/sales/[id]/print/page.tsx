@@ -9,7 +9,7 @@ import { PrintTrigger } from "./_components/print-trigger";
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const so = await prisma.salesOrder.findUnique({ where: { id }, select: { orderNumber: true } });
-  return { title: so ? `Invoice ${so.orderNumber} — SSFI` : "Sales Invoice — SSFI" };
+  return { title: so ? `Invoice ${so.orderNumber} — SSFU` : "Sales Invoice — SSFU" };
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -80,7 +80,7 @@ export default async function PrintSalesInvoicePage({ params }: { params: Promis
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px", borderBottom: "2px solid #c0392b", paddingBottom: "14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/ssfi-logo.jpg" alt={COMPANY.nameShort} style={{ width: "56px", height: "56px", objectFit: "contain" }} />
+              <img src="/ssfu-logo.svg" alt={COMPANY.nameShort} style={{ width: "56px", height: "56px", objectFit: "contain" }} />
               <div>
                 <div style={{ fontSize: "16px", fontWeight: "700", color: "#c0392b", letterSpacing: "0.5px" }}>{COMPANY.name.toUpperCase()}</div>
                 <div style={{ fontSize: "10px", color: "#555", marginTop: "2px" }}>{COMPANY.address}</div>

@@ -27,7 +27,7 @@ export default function SignInPage() {
         {/* Top: brand */}
         <div className="relative z-10 flex items-center gap-3">
           <div className="relative h-9 w-9 shrink-0 rounded-md overflow-hidden bg-white/10 ring-1 ring-white/10">
-            <Image src="/ssfi-logo.jpg" alt="SSFI" fill className="object-contain p-0.5" priority />
+            <Image src="/ssfu-logo.svg" alt="SSFU" fill className="object-contain p-0.5" priority />
           </div>
           <div>
             <p className="text-white font-semibold text-sm leading-tight tracking-wide">{COMPANY.name}</p>
@@ -40,7 +40,7 @@ export default function SignInPage() {
 
           {/* Large logo */}
           <div className="relative h-20 w-20 rounded-2xl overflow-hidden bg-white/5 ring-1 ring-white/10 shadow-2xl">
-            <Image src="/ssfi-logo.jpg" alt="SSFI" fill className="object-contain p-2" />
+            <Image src="/ssfu-logo.svg" alt="SSFU" fill className="object-contain p-2" />
           </div>
 
           <div className="space-y-4 max-w-sm">
@@ -50,7 +50,7 @@ export default function SignInPage() {
             </div>
             <h1 className="text-4xl font-bold text-white leading-tight tracking-tight">
               Welcome to<br />
-              <span className="text-red-600">SHANTI SPECIAL FOOD INDUSTRY</span>
+              <span className="text-red-600">SHANTI SPECIAL FOOD UDHYOG</span>
             </h1>
             <p className="text-slate-400 text-sm leading-relaxed">
               A secure, unified workspace for managing your entire
@@ -87,7 +87,7 @@ export default function SignInPage() {
         {/* Mobile brand */}
         <div className="flex lg:hidden items-center gap-3 mb-6">
           <div className="relative h-9 w-9 rounded-md overflow-hidden">
-            <Image src="/ssfi-logo.jpg" alt="SSFI" fill className="object-contain" />
+            <Image src="/ssfu-logo.svg" alt="SSFU" fill className="object-contain" />
           </div>
           <div>
             <p className="font-bold text-red-600 text-sm">{COMPANY.name}</p>

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { COMPANY } from "@/lib/company";
 
 import Image from "next/image";
@@ -43,7 +43,7 @@ export function PendingAccess({ name = "there", email }: Props) {
       <header className="border-b border-gray-200 bg-white px-6 py-3.5">
         <div className="mx-auto max-w-2xl flex items-center gap-3">
           <div className="relative h-8 w-8 shrink-0">
-            <Image src="/ssfi-logo.jpg" alt="SSFI" fill className="object-contain" priority />
+            <Image src="/ssfu-logo.svg" alt="SSFU" fill className="object-contain" priority />
           </div>
           <div className="leading-tight">
             <p className="font-bold text-gray-900 text-sm">{COMPANY.nameShort} ERP</p>
@@ -229,7 +229,7 @@ export function PendingAccess({ name = "there", email }: Props) {
                 <ContactRow
                   icon={User}
                   label="System Administrator"
-                  value="SSFI IT / Management"
+                  value="SSFU IT / Management"
                 />
               </div>
 

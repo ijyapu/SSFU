@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -636,7 +636,7 @@ export function PurchaseForm({ suppliers: initSuppliers, products: initProducts,
               <FormField control={supplierForm.control} name="name" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Vendor Name *</FormLabel>
-                  <FormControl><Input {...field} placeholder="e.g. SSFI Pvt. Ltd." /></FormControl>
+                  <FormControl><Input {...field} placeholder="e.g. SSFU Pvt. Ltd." /></FormControl>
                   <FormMessage />
                 </FormItem>
               )} />

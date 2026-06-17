@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     template: `%s — ${COMPANY.name} ERP`,
   },
   description: `Enterprise Resource Planning for ${COMPANY.name}`,
-  icons: { icon: "/ssfi-logo.jpg" },
+  icons: { icon: "/ssfu-logo.svg" },
 };
 
 export default function RootLayout({

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+﻿import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -165,7 +165,7 @@ export function EmployeeForm({ open, onClose, employee, departments }: Props) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Email</FormLabel>
-                    <FormControl><Input {...field} type="email" placeholder="employee@ssfi.com" /></FormControl>
+                    <FormControl><Input {...field} type="email" placeholder="employee@ssfu.work" /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useMemo } from "react";
 import Link from "next/link";
@@ -139,7 +139,7 @@ export function ReorderTable({ items }: { items: ReorderItem[] }) {
 
       {/* Print-only footer */}
       <div className="hidden print:block text-xs text-muted-foreground mt-4 border-t pt-2">
-        SSFI ERP · Reorder List · Generated {new Date().toLocaleDateString()} · {toNepaliDateString(new Date())}
+        SSFU ERP · Reorder List · Generated {new Date().toLocaleDateString()} · {toNepaliDateString(new Date())}
       </div>
     </div>
   );

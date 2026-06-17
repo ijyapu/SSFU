@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { COMPANY } from "@/lib/company";
 
 import Image from "next/image";
@@ -33,7 +33,7 @@ const DEPARTMENTS = [
 
 const TEXT_FIELDS: Field[] = [
   { name: "fullName",  label: "Full Name",   placeholder: "Ram Prasad Sharma",    required: true,  icon: User },
-  { name: "workEmail", label: "Work Email",  placeholder: "name@ssfi.com.np",     required: true,  type: "email", icon: Mail },
+  { name: "workEmail", label: "Work Email",  placeholder: "name@ssfu.work",     required: true,  type: "email", icon: Mail },
   { name: "jobTitle",  label: "Job Title",   placeholder: "e.g. Sales Manager",   required: true,  icon: Briefcase },
   { name: "phone",     label: "Phone",       placeholder: "98XXXXXXXX",           required: false, type: "tel", icon: Phone },
 ];
@@ -98,7 +98,7 @@ export default function RequestAccessPage() {
         <div className="mx-auto max-w-4xl flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="relative h-8 w-8 shrink-0">
-              <Image src="/ssfi-logo.jpg" alt="SSFI" fill className="object-contain" priority />
+              <Image src="/ssfu-logo.svg" alt="SSFU" fill className="object-contain" priority />
             </div>
             <div className="leading-tight">
               <p className="font-bold text-gray-900 text-sm">{COMPANY.nameShort} ERP</p>

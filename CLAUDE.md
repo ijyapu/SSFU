@@ -1,10 +1,11 @@
 @AGENTS.md
 
-# SSFI ERP — Claude Project Guide
+# SSFU ERP — Claude Project Guide
 
 ## Project Overview
-Enterprise Resource Planning system for **Shanti Special Food Industry Pvt. Ltd.** (Nepal).
+Enterprise Resource Planning system for **Shanti Special Food Udhyog Pvt. Ltd.** (Nepal).
 Internal tool — not a public product. All users require admin approval after sign-in.
+Codebase is derived from the SSFI ERP; all business logic is intentionally identical unless noted otherwise.
 
 ## Tech Stack
 | Layer | Library | Version |
@@ -15,7 +16,7 @@ Internal tool — not a public product. All users require admin approval after s
 | Database | PostgreSQL via Supabase | — |
 | ORM | Prisma | v5 |
 | Storage | Supabase Storage (proof photos) | — |
-| Email | Resend (`onboarding@resend.dev` sender) | v6 |
+| Email | Resend (optional — disabled when env vars absent) | v6 |
 | Forms | react-hook-form + zod v4 | — |
 | Toast | sonner | — |
 | Charts | recharts | — |
@@ -24,26 +25,38 @@ Internal tool — not a public product. All users require admin approval after s
 - **App Router only** — no Pages Router. All routes under `src/app/`.
 - **Server Actions** — mutations use `"use server"` actions, never API routes for internal data.
 - **Soft deletes** — records are never hard-deleted. Use `deletedAt: new Date()` and filter `deletedAt: null` in queries.
-- **Role-based access** — roles stored in Clerk `publicMetadata.role`. Values: `admin`, `manager`, `accountant`, `staff`. Check with `useRole()` hook or `currentUser()` in server actions.
+- **Role-based access** — roles stored in Clerk `publicMetadata.role`. Values: `superadmin`, `admin`, `manager`, `accountant`, `employee`. Check with `useRole()` hook or `currentUser()` in server actions.
 - **Auth flow** — sign-in → `/auth-callback` → role check → redirect. Pending users see a waiting screen.
+- **No Sentry** — error tracking is not configured. `instrumentation.ts` logs to console only.
 
 ## Module Structure
 ```
 src/app/(dashboard)/
   dashboard/        # Overview cards + revenue chart
   inventory/        # Products, stock levels, reorder, adjustments
+  daily-log/        # Daily production log (open/close/reopen)
   purchases/        # Purchase orders + invoices + supplier payments
-  purchases/suppliers/
-  sales/            # Sales orders + customer payments
-  sales/customers/
+  vendors/          # Vendor profiles + payable ledger
+  sales/            # Sales orders + customer payments + returns
+  salesmen/         # Salesman ledger + commission tracking
   expenses/         # Expense tracking
   employees/        # Employee profiles + salary withdrawals
   payroll/          # Payroll runs + deduction dialogs
-  reports/          # Aging, stock valuation, receivables, payables
+  receipts/         # Receipts received + payments out
+  cash-flow/        # Cash position tracking
   profit-loss/      # P&L statement
-  costing/          # Product margin analysis
+  costing/          # Product margin analysis + recipes
+  reports/          # Aging, stock valuation, receivables, payables, analytics
   settings/         # Users, categories, units, audit log, access requests
 ```
+
+## Costing Logic
+- Uses **latest purchase price** — no weighted average.
+- `recalcProductCostFromRecipe()` in `src/lib/recipe-cost.ts`:
+  - `ingredientCost = Σ(qty × ingredient.costPrice)`
+  - `costPerUnit = (ingredientCost + overheadCost) ÷ yieldQty`
+- `deductionPct` on Recipe is a profitability-preview field only — never used in costPrice.
+- When a purchase is received, ingredient `costPrice` updates, then cascades to all recipes using that ingredient.
 
 ## Database Conventions
 - All monetary values: `Decimal @db.Decimal(10, 2)` — convert with `Number()` before use in JS.
@@ -64,14 +77,7 @@ const { sortKey, sortDir, toggle } = useSortable("defaultColumn");
 const sorted = useMemo(() => [...rows].sort((a, b) =>
   compareValues(a[sortKey], b[sortKey], sortDir)
 ), [rows, sortKey, sortDir]);
-
-// In header:
-<TableHead><SortButton col="name" label="Name" {...{ sortKey, sortDir, toggle }} /></TableHead>
-// For numeric columns (right-aligned):
-<TableHead numeric><SortButton col="amount" label="Amount" {...sp} className="justify-end" /></TableHead>
 ```
-- If a component has an existing `toggle` function, destructure as `toggle: sortToggle` to avoid naming conflicts.
-- Never call `useMemo` inside a `.map()` — use a plain helper function instead.
 
 ### Numeric Table Columns
 `TableHead` and `TableCell` accept a `numeric` boolean prop that applies `text-right tabular-nums`:
@@ -79,44 +85,24 @@ const sorted = useMemo(() => [...rows].sort((a, b) =>
 <TableHead numeric>Total (Rs)</TableHead>
 <TableCell numeric>{amount.toFixed(2)}</TableCell>
 ```
-Always use `numeric` for amounts, quantities, and counts — never manually add `text-right tabular-nums` to className.
 
 ### Forms
 - Validators live in `src/lib/validators/` — one file per domain.
 - Uses `zod` v4 (`import { z } from "zod/v4"` in client components, `import { z } from "zod"` in server actions).
 - Number inputs must use `value={field.value === 0 ? "" : field.value}` to prevent "078" prefix bug.
-- Inline "add new" dialogs exist for Supplier and Product within the purchase form.
-
-### SKU Auto-Generation
-When creating a product inline (via purchase form), SKU is auto-generated:
-- Prefix = first 3 letters of category name (uppercase, non-alpha → "X")
-- Number = highest existing SKU number for that prefix + 1 (zero-padded to 3 digits)
-- Example: category "Cakes" → `CAK-001`, `CAK-002`, etc.
-
-### Photo Uploads
-Use `<PhotoUpload>` component from `src/components/ui/photo-upload.tsx`. Uploads to Supabase Storage. Returns a URL string.
-
-## UI Conventions
-- **Header**: sticky, `z-50`, shows breadcrumb + notification bell + user button.
-- **Sidebar**: collapsible, uses shadcn `SidebarProvider`.
-- **Tables**: always wrapped in `<div className="rounded-lg border overflow-x-auto">`.
-- **Empty states**: `<TableCell colSpan={N} className="text-center py-12 text-muted-foreground">`.
-- **Badges**: use semantic colors — green=success/paid, amber=draft/warning, orange=partial/credit, red=cancelled/destructive.
-- **Toasts**: `toast.success(...)` on success, `toast.error(e instanceof Error ? e.message : "Fallback")` on error.
-- **Delete confirmations**: always use `AlertDialog` — never delete on single click.
 
 ## Environment Variables (`.env.local`)
 ```
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
 CLERK_SECRET_KEY
 NEXT_PUBLIC_SUPABASE_URL
-NEXT_PUBLIC_SUPABASE_ANON_KEY
 SUPABASE_SERVICE_ROLE_KEY
 DATABASE_URL          # pooled (runtime)
 DIRECT_URL            # direct (migrations only)
-RESEND_API_KEY
-ADMIN_EMAIL=shrestha.bikas23@gmail.com
-NEXT_PUBLIC_APP_URL=http://localhost:3000
+RESEND_API_KEY        # optional
+RESEND_FROM_EMAIL     # optional — email disabled if absent
+ADMIN_EMAIL           # optional — admin alerts disabled if absent
+NEXT_PUBLIC_APP_URL
 CLERK_WEBHOOK_SECRET
 ```
 
@@ -135,4 +121,7 @@ npm run db:seed       # seed database
 - **Decimal fields**: always wrap Prisma Decimal values with `Number()` before arithmetic or display.
 - **`useMemo` in maps**: not allowed — extract sort/filter logic to a plain function above the render.
 - **`toggle` naming**: `useSortable` exports `toggle` — rename if the component already uses that identifier.
-- **Resend sender**: currently `onboarding@resend.dev` (no custom domain yet). Only delivers to the registered Resend account email in test mode.
+- **Salesman model**: mapped to `"Customer"` table in the DB (`@@map("Customer")`) — historical artifact, do not rename.
+- **Email silent-fail**: all four email functions return silently if `RESEND_API_KEY` or `RESEND_FROM_EMAIL` env vars are not set.
+- **Logo placeholder**: `public/ssfu-logo.svg` is a placeholder — replace with real SSFU logo before production.
+- **Company details placeholder**: `src/lib/company.ts` fields (address, phone, PAN, owner, established) are TBD — confirm before deployment.

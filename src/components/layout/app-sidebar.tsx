@@ -40,7 +40,7 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" render={<Link href="/dashboard" />}>
               <div className="flex aspect-square size-8 shrink-0 items-center justify-center rounded-lg overflow-hidden bg-white border border-border">
-                <Image src="/ssfi-logo.jpg" alt={COMPANY.nameShort} width={32} height={32} className="object-contain" />
+                <Image src="/ssfu-logo.svg" alt={COMPANY.nameShort} width={32} height={32} className="object-contain" />
               </div>
               <div className="flex flex-col leading-none">
                 <span className="font-semibold text-sm">{COMPANY.nameShort} ERP</span>

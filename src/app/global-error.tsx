@@ -1,6 +1,5 @@
 "use client";
 
-import * as Sentry from "@sentry/nextjs";
 import { useEffect } from "react";
 
 // Catches errors that escape the root layout — replaces the entire document.
@@ -14,13 +13,6 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    Sentry.captureException(error, {
-      extra: {
-        digest:    error.digest,
-        timestamp: new Date().toISOString(),
-        scope:     "global-error",
-      },
-    });
     console.error("[ERP] Global error (outside root layout)", {
       digest:    error.digest,
       timestamp: new Date().toISOString(),
@@ -38,7 +30,6 @@ export default function GlobalError({
           padding:        "2rem",
         }}>
           <div style={{ textAlign: "center", maxWidth: 420 }}>
-            {/* Icon */}
             <div style={{
               display:         "inline-flex",
               alignItems:      "center",
@@ -60,8 +51,7 @@ export default function GlobalError({
               Something went wrong
             </h2>
             <p style={{ color: "#6b7280", fontSize: "0.875rem", margin: "0 0 1.5rem", lineHeight: 1.5 }}>
-              Something went wrong while loading this page. The error has been
-              reported automatically.
+              An unexpected error occurred. Please try again or contact your administrator.
             </p>
 
             {error.digest && (

@@ -1,4 +1,4 @@
-import Image from "next/image";
+﻿import Image from "next/image";
 import { requirePermission } from "@/lib/auth";
 import { COMPANY } from "@/lib/company";
 import { Building2, Phone, Hash, User, Calendar, MapPin, Quote, BadgeCheck } from "lucide-react";
@@ -28,7 +28,7 @@ export default async function CompanyPage() {
       <div className="rounded-xl border bg-card overflow-hidden">
         <div className="bg-red-700 px-6 py-5 flex items-center gap-4">
           <div className="rounded-xl bg-white overflow-hidden shadow-sm w-16 h-16 shrink-0 flex items-center justify-center">
-            <Image src="/ssfi-logo.jpg" alt={COMPANY.nameShort} width={60} height={60} className="object-contain p-1" />
+            <Image src="/ssfu-logo.svg" alt={COMPANY.nameShort} width={60} height={60} className="object-contain p-1" />
           </div>
           <div>
             <h2 className="text-xl font-bold text-white leading-tight">{COMPANY.name}</h2>

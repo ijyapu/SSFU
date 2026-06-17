@@ -1,4 +1,4 @@
-import Image from "next/image";
+﻿import Image from "next/image";
 import { currentUser } from "@clerk/nextjs/server";
 import { Building2, Phone, Hash, User, Calendar, MapPin, Quote, BadgeCheck } from "lucide-react";
 import { getCompanyInfo } from "./actions";
@@ -42,7 +42,7 @@ export default async function CompanyPage() {
       <div className="rounded-xl border bg-card overflow-hidden">
         <div className="bg-primary px-6 py-5 flex items-center gap-4">
           <div className="rounded-xl bg-white overflow-hidden shadow-sm w-16 h-16 shrink-0 flex items-center justify-center">
-            <Image src="/ssfi-logo.jpg" alt={info.nameShort} width={60} height={60} className="object-contain p-1" />
+            <Image src="/ssfu-logo.svg" alt={info.nameShort} width={60} height={60} className="object-contain p-1" />
           </div>
           <div>
             <h2 className="text-xl font-bold text-white leading-tight">{info.name}</h2>

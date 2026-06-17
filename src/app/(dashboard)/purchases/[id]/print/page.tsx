@@ -9,7 +9,7 @@ import { COMPANY } from "@/lib/company";
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const p = await prisma.purchase.findUnique({ where: { id }, select: { invoiceNo: true } });
-  return { title: p ? `Invoice ${p.invoiceNo} — SSFI` : "Invoice — SSFI" };
+  return { title: p ? `Invoice ${p.invoiceNo} — SSFU` : "Invoice — SSFU" };
 }
 
 export default async function PrintInvoicePage({ params }: { params: Promise<{ id: string }> }) {
@@ -51,7 +51,7 @@ export default async function PrintInvoicePage({ params }: { params: Promise<{ i
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "24px", borderBottom: "2px solid #c0392b", paddingBottom: "16px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/ssfi-logo.jpg" alt={COMPANY.nameShort} style={{ width: "56px", height: "56px", objectFit: "contain" }} />
+              <img src="/ssfu-logo.svg" alt={COMPANY.nameShort} style={{ width: "56px", height: "56px", objectFit: "contain" }} />
               <div>
                 <div style={{ fontSize: "16px", fontWeight: "700", color: "#c0392b", letterSpacing: "0.5px" }}>{COMPANY.name.toUpperCase()}</div>
                 <div style={{ fontSize: "10px", color: "#555", marginTop: "2px" }}>{COMPANY.address}</div>

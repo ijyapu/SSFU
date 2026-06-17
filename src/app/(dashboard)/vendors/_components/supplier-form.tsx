@@ -1,4 +1,4 @@
-
+﻿
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -87,7 +87,7 @@ export function SupplierForm({ open, onClose, supplier }: Props) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Vendor Name *</FormLabel>
-                  <FormControl><Input {...field} placeholder="e.g. SSFI Pvt. Ltd." /></FormControl>
+                  <FormControl><Input {...field} placeholder="e.g. SSFU Pvt. Ltd." /></FormControl>
                   <FormMessage />
                 </FormItem>
               )}
