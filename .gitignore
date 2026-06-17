@@ -48,3 +48,9 @@ next-env.d.ts
 
 # Sentry Config File
 .env.sentry-build-plugin
+
+# clerk configuration (can include secrets)
+/.clerk/
+
+# Local migration archive (not for deployment)
+prisma/migrations_archive/
