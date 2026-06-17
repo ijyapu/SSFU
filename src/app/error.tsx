@@ -1,6 +1,5 @@
 "use client";
 
-import * as Sentry from "@sentry/nextjs";
 import { useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
 import { usePathname } from "next/navigation";
@@ -17,14 +16,6 @@ export default function RootError({
   const pathname = usePathname();
 
   useEffect(() => {
-    Sentry.captureException(error, {
-      extra: {
-        digest:    error.digest,
-        route:     pathname,
-        userId:    user?.id,
-        timestamp: new Date().toISOString(),
-      },
-    });
     console.error("[ERP] Root page error", {
       digest:    error.digest,
       route:     pathname,
