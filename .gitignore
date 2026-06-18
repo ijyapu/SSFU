@@ -54,3 +54,4 @@ next-env.d.ts
 
 # Local migration archive (not for deployment)
 prisma/migrations_archive/
+.vercel
