@@ -29,6 +29,7 @@ export default async function PurchasesPage({ searchParams }: Props) {
       where: { deletedAt: null, ...(dateWhere ? { date: dateWhere } : {}) },
       include: { supplier: { select: { id: true, name: true } } },
       orderBy: { date: "desc" },
+      take: 500,
     }),
     prisma.supplier.findMany({
       where: { deletedAt: null },

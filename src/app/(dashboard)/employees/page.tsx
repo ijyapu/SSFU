@@ -14,6 +14,7 @@ export default async function EmployeesPage() {
       where: { deletedAt: null },
       include: { department: true },
       orderBy: [{ department: { name: "asc" } }, { firstName: "asc" }],
+      take: 500,
     }),
     prisma.department.findMany({
       where: { deletedAt: null },

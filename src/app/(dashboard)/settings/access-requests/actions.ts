@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { requirePermission } from "@/lib/auth";
-import { clerkClient } from "@clerk/nextjs/server";
+import { clerkClient, currentUser } from "@clerk/nextjs/server";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { sendApprovalEmail, sendRejectionEmail } from "@/lib/email";
@@ -23,6 +23,9 @@ export async function approveRequest(values: z.infer<typeof approveSchema>) {
   await requirePermission("settings");
 
   const { id, email, role, note } = approveSchema.parse(values);
+
+  // Get the admin performing the approval for the audit log
+  const adminUser = await currentUser();
 
   // 1. Find the Clerk user by email
   const client = await clerkClient();
@@ -49,7 +52,19 @@ export async function approveRequest(values: z.infer<typeof approveSchema>) {
     },
   });
 
-  // 5. Send approval email — non-blocking
+  // 5. Write audit log recording who approved whom and what role was granted
+  await prisma.auditLog.create({
+    data: {
+      userId:     adminUser!.id,
+      action:     "APPROVE_ACCESS_REQUEST",
+      entityType: "User",
+      entityId:   clerkUser ? clerkUser.id : id,
+      before:     { role: null },
+      after:      { role },
+    },
+  });
+
+  // 6. Send approval email — non-blocking
   await sendApprovalEmail(email, request.fullName, role).catch((err) =>
     console.error("[approveRequest] email failed:", err)
   );

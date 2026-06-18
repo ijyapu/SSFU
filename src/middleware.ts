@@ -12,7 +12,6 @@ const isPublicRoute = createRouteMatcher([
   "/pending",
   "/api/webhooks(.*)",
   "/api/health",
-  "/api/test-email",
 ]);
 
 export default clerkMiddleware(async (auth, req) => {

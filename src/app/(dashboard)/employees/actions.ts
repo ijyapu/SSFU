@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
 import { currentUser } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import {
   departmentSchema, employeeSchema, payrollRunSchema, payrollItemSchema,
   type DepartmentFormValues, type EmployeeFormValues,
@@ -16,7 +17,7 @@ async function requireEmployeesAccess() {
   if (!userId) throw new Error("Unauthenticated");
   const user = await currentUser();
   const role = user?.publicMetadata?.role as string | undefined;
-  if (!role || !["admin", "manager"].includes(role)) throw new Error("Unauthorized");
+  if (!role || !["superadmin", "admin", "manager"].includes(role)) throw new Error("Unauthorized");
   return userId;
 }
 
@@ -25,7 +26,7 @@ async function requirePayrollAccess() {
   if (!userId) throw new Error("Unauthenticated");
   const user = await currentUser();
   const role = user?.publicMetadata?.role as string | undefined;
-  if (!role || !["admin", "accountant", "manager"].includes(role)) throw new Error("Unauthorized");
+  if (!role || !["superadmin", "admin", "accountant", "manager"].includes(role)) throw new Error("Unauthorized");
   return userId;
 }
 
@@ -367,9 +368,10 @@ export async function updatePayrollItem(id: string, values: PayrollItemFormValue
 
   const item = await prisma.payrollItem.findUnique({
     where: { id },
-    select: { basicSalary: true, carryoverIn: true, payrollRunId: true },
+    select: { basicSalary: true, carryoverIn: true, payrollRunId: true, payrollRun: { select: { status: true } } },
   });
   if (!item) throw new Error("Payroll item not found");
+  if (item.payrollRun.status === "FINALIZED") throw new Error("Cannot modify a finalized payroll run");
 
   const netPay = calcNetPay(Number(item.basicSalary), Number(item.carryoverIn), data.deductions);
   if (netPay < 0) throw new Error("Total paid cannot exceed total owed");
@@ -513,13 +515,14 @@ export async function finalizePayrollRun(id: string) {
 }
 
 export async function deletePayrollRun(id: string) {
-  await requirePayrollAccess();
+  const userId = await requirePayrollAccess();
 
   const run = await prisma.payrollRun.findUnique({
     where: { id },
-    select: { month: true, year: true },
+    select: { month: true, year: true, status: true },
   });
   if (!run) throw new Error("Payroll run not found");
+  if (run.status === "FINALIZED") throw new Error("Cannot delete a finalized payroll run");
 
   // Find next month's run (if any) — its carryover needs to be recalculated
   const nextMonth = run.month === 12 ? 1  : run.month + 1;
@@ -561,6 +564,17 @@ export async function deletePayrollRun(id: string) {
   }
 
   await prisma.$transaction(async (tx) => {
+    await tx.auditLog.create({
+      data: {
+        userId,
+        action:     "DELETE_PAYROLL_RUN",
+        entityType: "PayrollRun",
+        entityId:   id,
+        before:     { month: run.month, year: run.year, status: run.status },
+        after:      Prisma.JsonNull,
+      },
+    });
+
     // Delete deduction entries first (cascade should handle it, but be explicit)
     await tx.payrollDeduction.deleteMany({
       where: { payrollItem: { payrollRunId: id } },

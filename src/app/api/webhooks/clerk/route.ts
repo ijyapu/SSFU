@@ -3,13 +3,6 @@ import { Webhook } from "svix";
 import { prisma } from "@/lib/prisma";
 import { sendRequestReceivedEmail, sendAdminNewRequestAlert } from "@/lib/email";
 
-// Diagnostic: lets you confirm the route is reachable without a redirect
-export function GET() {
-  return new Response(JSON.stringify({ ok: true, route: "clerk-webhook" }), {
-    headers: { "content-type": "application/json" },
-  });
-}
-
 type ClerkUserCreatedEvent = {
   type: "user.created";
   data: {

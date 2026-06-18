@@ -144,16 +144,21 @@ export async function createSalesOrder(values: CreateSoValues) {
   const commissionPct = Number(customer?.commissionPct ?? 0);
   const subtotal      = data.items.reduce((sum, i) => sum + i.quantity * i.unitPrice, 0);
 
-  // Check stock availability before touching anything
+  // Check stock availability and validate unit prices before touching anything
   for (const item of data.items) {
     const product = await prisma.product.findUnique({
       where: { id: item.productId },
-      select: { name: true, currentStock: true },
+      select: { name: true, currentStock: true, sellingPrice: true },
     });
     if (!product) throw new Error("Product not found");
     if (Number(product.currentStock) < item.quantity) {
       throw new Error(
         `Insufficient stock for "${product.name}". Available: ${Number(product.currentStock).toLocaleString(undefined, { maximumFractionDigits: 3 })}, needed: ${item.quantity.toLocaleString(undefined, { maximumFractionDigits: 3 })}`
+      );
+    }
+    if (item.unitPrice < Number(product.sellingPrice)) {
+      throw new Error(
+        `Unit price for ${product.name} cannot be lower than the catalog price of Rs ${Number(product.sellingPrice)}`
       );
     }
   }
@@ -447,16 +452,21 @@ export async function updateSalesOrder(id: string, values: UpdateSoValues) {
         );
       }
 
-      // Validate new stock (stock is now restored from reversals above)
+      // Validate new stock and unit prices (stock is now restored from reversals above)
       for (const item of data.items) {
         const product = await tx.product.findUnique({
           where:  { id: item.productId },
-          select: { name: true, currentStock: true },
+          select: { name: true, currentStock: true, sellingPrice: true },
         });
         if (!product) throw new Error("Product not found");
         if (Number(product.currentStock) < item.quantity) {
           throw new Error(
             `Insufficient stock for "${product.name}". Available: ${Number(product.currentStock).toLocaleString(undefined, { maximumFractionDigits: 3 })}, needed: ${item.quantity.toLocaleString(undefined, { maximumFractionDigits: 3 })}`
+          );
+        }
+        if (item.unitPrice < Number(product.sellingPrice)) {
+          throw new Error(
+            `Unit price for ${product.name} cannot be lower than the catalog price of Rs ${Number(product.sellingPrice)}`
           );
         }
       }
