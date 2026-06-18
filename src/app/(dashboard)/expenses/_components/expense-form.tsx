@@ -50,11 +50,12 @@ export function ExpenseForm({ open, onClose, expense, categories }: Props) {
   const form = useForm<ExpenseFormValues>({
     resolver: zodResolver(expenseSchema),
     defaultValues: {
-      categoryId:  "",
-      description: "",
-      amount:      0,
-      date:        format(new Date(), "yyyy-MM-dd"),
-      notes:       "",
+      categoryId:    "",
+      description:   "",
+      amount:        0,
+      date:          format(new Date(), "yyyy-MM-dd"),
+      notes:         "",
+      attachmentUrl: null,
     },
   });
 
@@ -63,18 +64,20 @@ export function ExpenseForm({ open, onClose, expense, categories }: Props) {
       form.reset(
         expense
           ? {
-              categoryId:  expense.categoryId,
-              description: expense.description,
-              amount:      expense.amount,
-              date:        expense.date.slice(0, 10),
-              notes:       expense.notes ?? "",
+              categoryId:    expense.categoryId,
+              description:   expense.description,
+              amount:        expense.amount,
+              date:          expense.date.slice(0, 10),
+              notes:         expense.notes ?? "",
+              attachmentUrl: expense.attachmentUrl ?? null,
             }
           : {
-              categoryId:  "",
-              description: "",
-              amount:      0,
-              date:        format(new Date(), "yyyy-MM-dd"),
-              notes:       "",
+              categoryId:    "",
+              description:   "",
+              amount:        0,
+              date:          format(new Date(), "yyyy-MM-dd"),
+              notes:         "",
+              attachmentUrl: null,
             }
       );
     }
@@ -82,11 +85,12 @@ export function ExpenseForm({ open, onClose, expense, categories }: Props) {
 
   async function onSubmit(values: ExpenseFormValues) {
     try {
+      const payload: ExpenseFormValues = { ...values, attachmentUrl: photoUrl ?? null };
       if (expense) {
-        await updateExpense(expense.id, { ...values, attachmentUrl: photoUrl ?? undefined });
+        await updateExpense(expense.id, payload);
         toast.success("Expense updated");
       } else {
-        await submitExpense({ ...values, attachmentUrl: photoUrl ?? undefined });
+        await submitExpense(payload);
         toast.success("Expense submitted");
       }
       onClose();

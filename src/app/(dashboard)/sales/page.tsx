@@ -28,6 +28,7 @@ export default async function SalesPage({ searchParams }: Props) {
       where: { deletedAt: null, ...(dateWhere ? { orderDate: dateWhere } : {}) },
       include: { salesman: true },
       orderBy: { createdAt: "desc" },
+      take: 500,
     }),
     prisma.salesman.findMany({
       where: { deletedAt: null },

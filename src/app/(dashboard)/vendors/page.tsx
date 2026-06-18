@@ -11,6 +11,7 @@ export default async function SuppliersPage() {
   const suppliers = await prisma.supplier.findMany({
     where: { deletedAt: null },
     orderBy: { name: "asc" },
+    take: 500,
     select: {
       id: true, name: true, contactName: true, email: true,
       phone: true, address: true, pan: true, openingBalance: true,

@@ -29,10 +29,12 @@ export default async function ReceiptsPage({ searchParams }: Props) {
     prisma.receipt.findMany({
       where:   { deletedAt: null, ...(dateWhere ? { receivedAt: dateWhere } : {}) },
       orderBy: { receivedAt: "desc" },
+      take:    500,
     }),
     prisma.receiptPayment.findMany({
       where:   { deletedAt: null, ...(dateWhere ? { paidAt: dateWhere } : {}) },
       orderBy: { paidAt: "desc" },
+      take:    500,
     }),
   ]);
 

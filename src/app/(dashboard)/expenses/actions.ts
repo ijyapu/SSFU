@@ -17,7 +17,7 @@ function canApprove(role: string | null) {
   return role !== null && ["superadmin", "admin", "manager", "accountant"].includes(role);
 }
 
-export async function submitExpense(values: ExpenseFormValues & { attachmentUrl?: string }) {
+export async function submitExpense(values: ExpenseFormValues) {
   const { userId } = await getUser();
   const data = expenseSchema.parse(values);
 
@@ -28,7 +28,7 @@ export async function submitExpense(values: ExpenseFormValues & { attachmentUrl?
       amount:        data.amount,
       date:          new Date(data.date),
       notes:         data.notes || null,
-      attachmentUrl: values.attachmentUrl || null,
+      attachmentUrl: data.attachmentUrl || null,
       submittedBy:   userId,
     },
   });
@@ -36,7 +36,7 @@ export async function submitExpense(values: ExpenseFormValues & { attachmentUrl?
   revalidatePath("/expenses");
 }
 
-export async function updateExpense(id: string, values: ExpenseFormValues & { attachmentUrl?: string }) {
+export async function updateExpense(id: string, values: ExpenseFormValues) {
   const { userId, role } = await getUser();
   const data = expenseSchema.parse(values);
 
@@ -62,7 +62,7 @@ export async function updateExpense(id: string, values: ExpenseFormValues & { at
       amount:        data.amount,
       date:          new Date(data.date),
       notes:         data.notes || null,
-      attachmentUrl: values.attachmentUrl ?? null,
+      attachmentUrl: data.attachmentUrl ?? null,
     },
   });
 

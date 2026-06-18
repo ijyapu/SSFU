@@ -30,6 +30,7 @@ export default async function ExpensesPage({ searchParams }: Props) {
       where: { deletedAt: null, ...(dateWhere ? { date: dateWhere } : {}) },
       include: { category: true },
       orderBy: { date: "desc" },
+      take: 500,
     }),
     prisma.expenseCategory.findMany({
       where: { deletedAt: null },

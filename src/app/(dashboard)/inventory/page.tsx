@@ -17,6 +17,7 @@ export default async function InventoryPage() {
       where: { deletedAt: null },
       include: { category: true, unit: true },
       orderBy: [{ category: { name: "asc" } }, { name: "asc" }],
+      take: 500,
     }),
     prisma.category.findMany({
       where: { deletedAt: null },
